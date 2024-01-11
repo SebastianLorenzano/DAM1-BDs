@@ -118,6 +118,7 @@ HAVING COUNT(codigo) > 1
 
 SELECT codigo_fabricante as codFabricante, COUNT(codigo) as NumProductos
   FROM PRODUCTO
+ WHERE precio >= 220
  GROUP BY codigo_fabricante
 
 
