@@ -10,6 +10,9 @@ USE TIENDA
 
 SELECT * 
   FROM PRODUCTO
+
+SELECT * 
+  FROM FABRICANTE
 -- 1. Calculate the total number of products in the products table.
 
 SELECT Count(codigo)
@@ -93,9 +96,17 @@ SELECT AVG(precio)
 
 -- 13. List the code of the manufacturers whose products have an average price greater than or equal to 150 €.
 
+SELECT codigo_fabricante
+  FROM PRODUCTO
+ WHERE precio >= 150
+ GROUP BY codigo_fabricante
 
 -- 14. Return a list with the codes of the manufacturers that have 2 or more products.
 
+SELECT codigo_fabricante
+  FROM PRODUCTO
+ GROUP BY codigo_fabricante
+HAVING COUNT(codigo) > 1
 
 -- 15. Return a list with the manufacturers' codes and the number of products that each one has with a price greater than or equal to 220 €.
 -- It is not necessary to display the name of the manufacturers that do not have products that meet the condition.
@@ -105,5 +116,16 @@ SELECT AVG(precio)
 		2				2
 		6				1			*/
 
+SELECT codigo_fabricante as codFabricante, COUNT(codigo) as NumProductos
+  FROM PRODUCTO
+ GROUP BY codigo_fabricante
+
+
 
 -- 16. Return a list with the codes of the manufacturers where the sum of the price of all their products is greater than 1000 €.
+
+
+SELECT codigo_fabricante
+  FROM PRODUCTO
+ GROUP BY codigo_fabricante
+HAVING SUM(precio) > 1000
