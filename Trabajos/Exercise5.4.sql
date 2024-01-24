@@ -181,22 +181,46 @@ HAVING COUNT(codEmpleado) > 4
 
 -- 31. Obtain the customers who have made more than two payments of minimum 1000 euros. Also show the number of payments made.
 
+SELECT codCliente, COUNT(id_transaccion) numTransacciones
+  FROM PAGOS
+ WHERE importe_pago >= 1000
+ GROUP BY codCliente
+HAVING COUNT(importe_pago) > 2
+
 
 ----------------------------------------------------------------
 --				C) Multitable queries (10)				  --
 ----------------------------------------------------------------
 
--- 32. Get product names, quantity, and price for products included in orders 3 and 5. Order it by order number and product number ascending.
---SELECT ;
+-- 32. Get product names, quantity, and price for products included in orders 3 and 5. 
+  --Order it by order number and product number ascending.
+SELECT * FROM DETALLE_PEDIDOS
+SELECT * FROM PRODUCTOS
+SELECT p.nombre, d.cantidad, p.precio_venta
+  FROM DETALLE_PEDIDOS d,
+       PRODUCTOS p
+ WHERE d.codProducto = p.codProducto
+   AND codPedido IN(3, 5)
+ ORDER BY d.codPedido, p.codProducto ASC
 
--- 33. Get a list of the names of customers who have made a payment. The fields customer name, payment date and total should appear in ascending order by id client and payment date.
---SELECT ;
 
+-- 33. Get a list of the names of customers who have made a payment. The fields customer name, 
+  -- payment date and total should appear in ascending order by id client and payment date.
+SELECT c.nombre_cliente, p.fechaHora_pago, p.importe_pago
+  FROM CLIENTES c, PAGOS p
+ WHERE c.codCliente = p.codCliente
+ 
 -- 34. Get a list with each customer's name and the first and last name of their sales representative.
---SELECT ;
+SELECT c.nombre_cliente, e.nombre nombre_empleado, e.apellido1 apellido1_empleado
+  FROM CLIENTES c, EMPLEADOS e 
+ WHERE c.codEmpl_ventas = e.codEmpleado
 
 -- 35. Show the name of the customers that have made payments along with the name of their sales representatives. They should only appear once.
---SELECT ;
+SELECT c.nombre_cliente, c.codEmpl_ventas
+  FROM CLIENTES c, PAGOS p
+ WHERE c.codCliente = p.codCliente        --TODO
+   AND COUNT(p.importe_pago) > 0
+
 
 -- 36. Return the name of the customers who have made payments and the name of their representatives along with the city of the office to which the representative belongs.
 --SELECT ;
