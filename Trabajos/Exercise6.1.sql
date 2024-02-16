@@ -87,53 +87,117 @@ UPDATE PRODUCTOS
    SET precio_venta = precio_venta / 1.05
  WHERE codProducto IN (SELECT codProducto FROM DETALLE_PEDIDOS WHERE codPedido = 129)
 
---10.  What would be the sequence of deleting table records until finally the Alicante office we created in exercise 1 can be deleted? Once you have the script, check that it can be deleted.
-
+--10.  What would be the sequence of deleting table records until finally the Alicante office we created in 
+  --    exercise 1 can be deleted? Once you have the script, check that it can be deleted.
+DECLARE @codOfi AS CHAR(6)
+SET @codOfi = (SELECT codOficina FROM OFICINAS WHERE ciudad = 'Alicante');
+UPDATE CLIENTES
+SET codEmpl_ventas = NULL
+WHERE codEmpl_ventas = (SELECT codEmpl_ventas
+                        FROM CLIENTES
+                        WHERE codEmpl_ventas IN(SELECT codEmpleado 
+                                                FROM EMPLEADOS WHERE codOficina = @codOfi))
+DELETE FROM EMPLEADOS
+WHERE codOficina = @codOfi
+DELETE FROM OFICINAS
+WHERE codOficina = @codOfi
 
 --11. Increase by 20% the price of products that are NOT included in any order.
 -- Remember that you may need to round and/or use the CAST function (XXX as FLOAT)
+UPDATE PRODUCTOS
+SET precio_venta = precio_venta * 1.2
+WHERE codProducto NOT IN (SELECT codProducto FROM DETALLE_PEDIDOS)
 
 
 
 --12.  Leave the price of the products back as it was previously.
-
-
+UPDATE PRODUCTOS
+SET precio_venta = precio_venta / 1.2
+WHERE codProducto NOT IN (SELECT codProducto FROM DETALLE_PEDIDOS)
 
 --13.  Remove the customers who haven't made any payments.
+SELECT * FROM CLIENTES
+DELETE FROM CLIENTES
+WHERE codCliente NOT IN (SELECT DISTINCT codCliente FROM PAGOS)
 
-
-
---14.  Remove customers who have not placed a minimum of 2 orders (NOTE: when executing the statement it will fail because of the referential integrity, that is, because there are tables that have related the Client id as FK).
-
-
+--14.  Remove customers who have not placed a minimum of 2 orders 
+  --  (NOTE: when executing the statement it will fail because of the referential integrity, 
+  --  that is, because there are tables that have related the Client id as FK).
+DELETE FROM CLIENTES
+WHERE codCliente NOT IN (SELECT codCliente, COUNT(codCliente) 
+                         FROM PAGOS 
+                         GROUP BY codCliente 
+                         HAVING COUNT(codCliente) >= 2)
 
 --15. Remove the payments from the customer with the lowest credit limit.
+DELETE FROM PAGOS
+WHERE codCliente = (SELECT codCliente FROM CLIENTES WHERE limite_credito = (SELECT MIN(limite_credito) FROM CLIENTES))
+
+--16. Update the city to Alicante for those customers who have a credit limit lower than ALL prices of products 
+  --in the Ornamental category (there may be none).
+UPDATE CLIENTES
+SET ciudad = 'Alicante'
+WHERE limite_credito < ALL (SELECT limite_credito FROM PEDIDOS)
 
 
-
---16. Update the city to Alicante for those customers who have a credit limit lower than ALL prices of products in the Ornamental category (there may be none).
-
-
-
---17. Update the city to Madrid for those customers who have a monthly credit limit lower than ANY of the prices of the products in the Ornamental category.
-
+--17. Update the city to Madrid for those customers who have a monthly credit limit lower than ANY of the 
+    --prices of the products in the Ornamental category.
+UPDATE CLIENTES
+SET ciudad = 'Madrid'
+WHERE limite_credito / 12 < ANY (SELECT precio_venta FROM PRODUCTOS)
 
 
 --18. Set to 0 the customer's credit limit that fewer units ordered of the OR-179 product.
+SELECT codProducto FROM PRODUCTOS WHERE refInterna = 'OR-179'
+UPDATE CLIENTES
+SET limite_credito = 0
+WHERE codCliente = (SELECT TOP 1 pe.codCliente
+                      FROM PEDIDOS pe, PRODUCTOS pr, DETALLE_PEDIDOS dp
+                     WHERE pe.codPedido = dp.codPedido
+                       AND dp.codProducto = pr.codProducto
+                       AND pr.refInterna = 'OR-179'
+                     ORDER BY cantidad DESC)
 
 
+--19. Modify the detalle_pedido table to insert a numeric field called IVA. Set the value of that field to 18 for those records 
+  --whose order is dated from January 2009. Then update the rest of the orders by setting IVA to 21.
+ALTER TABLE DETALLE_PEDIDOS
+ADD iva TINYINT;
 
---19. Modify the detalle_pedido table to insert a numeric field called IVA. Set the value of that field to 18 for those records whose order is dated from January 2009. Then update the rest of the orders by setting IVA to 21.
+UPDATE DETALLE_PEDIDOS
+SET iva = 21
+
+UPDATE DETALLE_PEDIDOS
+SET iva = 18
+WHERE codPedido IN(SELECT codPedido FROM PEDIDOS WHERE fecha_pedido BETWEEN '2009-01-01' AND '2009-01-31')
 
 
-
---20. Modify the detalle_pedido table to incorporate a numeric field called total_linea and update all your records to calculate their value with the following formula:
+--20. Modify the detalle_pedido table to incorporate a numeric field called total_linea and update all your records to 
+    --calculate their value with the following formula:
 -- total_linea = precio_unidad*cantidad * (1 + (iva/100));
-
+SELECT * FROM DETALLE_PEDIDOS
+ALTER TABLE DETALLE_PEDIDOS
+ADD total_linea AS CAST(precio_unidad * cantidad * (1 + (iva/100)) AS DECIMAL(9, 2))
 
 --21.  Create a table called HISTORICO_CLIENTES that has the same structure as CUSTOMERS and also a field called registrationDate of type DATE.
 -- You must insert in a single statement the customers whose name contains the letter 's' and inform the registrationDate as the current date/time.
+SELECT * 
+  INTO HISTORICO_CLIENTES
+  FROM CLIENTES
+ WHERE nombre_cliente LIKE '%s%'
+
+ ALTER TABLE HISTORICO_CLIENTES
+ ADD registrationDate AS GETDATE()
 
 
---22.  Update the region, pais and codigo_postal fields in the CLIENT�s table to NULL for all records. Use just one update statement that updates these 3 fields from the existing data in table HISTORICO_CLIENTES. Verify that the data has been moved correctly.
+--22.  Update the region, pais and codigo_postal fields in the CLIENT�s table to NULL for all records. 
+  --Use just one update statement that updates these 3 fields from the existing data in table HISTORICO_CLIENTES.
+    --Verify that the data has been moved correctly.
+UPDATE CLIENTES
+SET cli.codPostal = hispostalCodeData, cli.ciudad = his.ciudad
+FROM CLIENTES cli INNER JOIN HISTORICO_CLIENTES his ON cli.codCliente = his.codCliente;
+
+
+
+
 
