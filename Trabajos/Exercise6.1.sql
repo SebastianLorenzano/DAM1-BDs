@@ -193,8 +193,13 @@ SELECT *
 --22.  Update the region, pais and codigo_postal fields in the CLIENT�s table to NULL for all records. 
   --Use just one update statement that updates these 3 fields from the existing data in table HISTORICO_CLIENTES.
     --Verify that the data has been moved correctly.
+
 UPDATE CLIENTES
-SET cli.codPostal = hispostalCodeData, cli.ciudad = his.ciudad
+SET pais = null, codPostal = null     -- Region cannot be null
+
+
+UPDATE CLIENTES
+SET cli.codPostal = hispostalCodeData, cli.pais = his.pais, cli.region = his.region
 FROM CLIENTES cli INNER JOIN HISTORICO_CLIENTES his ON cli.codCliente = his.codCliente;
 
 
