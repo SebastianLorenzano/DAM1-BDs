@@ -72,7 +72,7 @@ UPDATE PEDIDOS
 
 --8. Increase by 5% the price of the products that are included in the order you created before.
 -- Remember that you may need to round and/or use the CAST function (XXX as FLOAT)
-SELECT * FROM PRODUCTOS WHERE codProducto IN (SELECT codProducto FROM DETALLE_PEDIDOS WHERE codPedido = 129)
+-- SELECT * FROM PRODUCTOS WHERE codProducto IN (SELECT codProducto FROM DETALLE_PEDIDOS WHERE codPedido = 129)
 UPDATE PRODUCTOS
    SET precio_venta = precio_venta * 1.05
  WHERE codProducto IN (SELECT codProducto FROM DETALLE_PEDIDOS WHERE codPedido = 129)
@@ -116,7 +116,6 @@ SET precio_venta = precio_venta / 1.2
 WHERE codProducto NOT IN (SELECT codProducto FROM DETALLE_PEDIDOS)
 
 --13.  Remove the customers who haven't made any payments.
-SELECT * FROM CLIENTES
 DELETE FROM CLIENTES
 WHERE codCliente NOT IN (SELECT DISTINCT codCliente FROM PAGOS)
 
@@ -175,7 +174,6 @@ WHERE codPedido IN(SELECT codPedido FROM PEDIDOS WHERE fecha_pedido BETWEEN '200
 --20. Modify the detalle_pedido table to incorporate a numeric field called total_linea and update all your records to 
     --calculate their value with the following formula:
 -- total_linea = precio_unidad*cantidad * (1 + (iva/100));
-SELECT * FROM DETALLE_PEDIDOS
 ALTER TABLE DETALLE_PEDIDOS
 ADD total_linea AS CAST(precio_unidad * cantidad * (1 + (iva/100)) AS DECIMAL(9, 2))
 
