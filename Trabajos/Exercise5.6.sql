@@ -10,66 +10,115 @@
 -------------------------
 -- 		CONSULTAS
 -------------------------
+USE SUPERTIENDA
+SELECT * FROM PRODUCTOS
+SELECT * FROM CLIENTES
+SELECT * FROM PROVINCIAS
+SELECT * FROM MUNICIPIOS
 -- 1. Obtener todos los productos ordenados alfabéticamente por el nombre 
-SELECT ;
+SELECT *
+  FROM PRODUCTOS
+ ORDER BY nombre ASC
 
 
--- 2. Obtener todos los campos de todos los clientes que pertenezcan a la provincia de Madrid y sean del municipio de Alcorcón
-SELECT ;
+-- 2. Obtener todos los campos de todos los clientes que pertenezcan a la provincia 
+	--de Madrid y sean del municipio de Alcorcón
+-- Madrid : 28
+-- Alcorcon : 72
+SELECT *
+  FROM CLIENTES
+ WHERE codProv = 28
+   AND codMuni = 72
 
 
 -- 3. Obtener los productos que tengan un precio entre 20 y 22 € y cuyo IVA sea del 10%
-SELECT ;
+SELECT *
+  FROM PRODUCTOS
+ WHERE precioUnitario BETWEEN 20 AND 22
+   AND IVA = 10
 
 
 -- 4. Devuelve las tiendas que pertenezcan a la Comunidad Valenciana.
-SELECT ;
-
+-- 3, 12, 46
+SELECT *
+  FROM TIENDAS
+ WHERE codProv IN (3, 12, 46)
 
 -- 5. Devuelve el número de clientes cuyo nombre empiece por JOSE
-SELECT ;
+SELECT COUNT(codCliente) NumCodCliente
+  FROM CLIENTES
+ WHERE LEFT(nombre, 4) = 'JOSE'
 
 
 -- 6. Devuelve el número de empresas dadas de alta utilizando el campo NIFCIF
-SELECT ;
+SELECT * FROM COMPANYIAS_TRANSPORTE			-- PREGUNTAR
 
 
 -- 7. Devuelve el nombre y apellidos (en una sola columna) de los empleados que trabajan en la tienda 7
-SELECT ;
+SELECT CONCAT(nombre,' ',apellidos)
+  FROM VENDEDORES
+ WHERE codTienda = 7
 
 
 -- 8. Devuelve el nombre los/as jefes/as de las tiendas ubicadas en la Comunidad Valenciana
-SELECT ;
 
+SELECT v.nombre
+  FROM VENDEDORES v, TIENDAS t
+ WHERE v.codTienda = t.codTienda
+   AND  v.codVendedorJefe IS NULL
+   AND t.codProv IN (3, 12, 46) 
 
 -- 9. Devuelve el nombre los/as jefes/as de las tiendas ubicadas de la Comunidad Valenciana y además el nombre de la tienda
-SELECT ;
+SELECT v.nombre, t.codTienda
+  FROM VENDEDORES v, TIENDAS t
+ WHERE v.codTienda = t.codTienda
+   AND  v.codVendedorJefe IS NULL
+   AND t.codProv IN (3, 12, 46) 
 
 
 -- 10. Devuelve los municipios de la provincia de alicante ordenados alfabéticamente de mayor a menor
-SELECT ;
+SELECT *
+  FROM MUNICIPIOS
+ ORDER BY nombre ASC
 
 
 -- 11. Obtener las provincias cuyo nombre NO contiene ninguna 'o'
-SELECT ;
+SELECT *
+  FROM PROVINCIAS
+ WHERE nombre NOT LIKE '%o%'
 
  
 -- 12. Obtener las provincias cuyo nombre NO contiene ninguna 'o' NI NINGUNA 'e'
-SELECT ;
+SELECT *
+  FROM PROVINCIAS
+ WHERE nombre NOT LIKE '%o%'
+   AND nombre NOT LIKE '%e%'
 
 
 -- 13. Disponemos de una tabla para almacenar el periodo de las campañas de marketing de la empresa.
 -- Obtén qué campaña teníamos activa el día 22 de diciembre
-SELECT ;
+SELECT *
+  FROM CAMPANYAS										-- PREGUNTAR
+ WHERE '2024-12-22' BETWEEN fechaInicio AND fechaFin
 
-
--- 14. Obtén la información de los 5 primeros clientes cuyo nombre empiece por la letra 'A' y su primer apellido por la 'B'
-SELECT ;
-
+-- 14. Obtén la información de los 5 primeros clientes cuyo nombre empiece por la letra 'A' y 
+	--su primer apellido por la 'B'
+SELECT  TOP 5 *
+  FROM CLIENTES
+ WHERE LEFT(nombre, 1) = 'A'
+   AND LEFT(apellidos, 1) = 'B'
+ ORDER BY codCliente ASC
 
 -- 15. Obtén la información de los 5 primeros clientes cuyo nombre empiece por la letra 'A', su primer apellido por la 'B'
 --		y el segundo apellido por L (suponemos que el segundo apellido es el que viene después del primer espacio en blanco en los apellidos)
-SELECT ;
+SELECT  TOP 5 *
+  FROM CLIENTES
+ WHERE nombre LIKE'A%'
+   AND apellidos LIKE 'B%'
+   AND SUBSTRING(apellidos, 1, 2) LIKE 'L%'
+ ORDER BY codCliente ASC
+
+SELECT SUBSTRING(apellidos, 1, 1) FROM CLIENTES
 
 
 -- 16. Devuelve el precio del producto más barato y el más caro en la misma consulta
