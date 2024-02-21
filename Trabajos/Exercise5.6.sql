@@ -50,8 +50,8 @@ SELECT COUNT(codCliente) NumCodCliente
  WHERE LEFT(nombre, 4) = 'JOSE'
 
 
--- 6. Devuelve el número de empresas dadas de alta utilizando el campo NIFCIF
-SELECT * FROM COMPANYIAS_TRANSPORTE			-- PREGUNTAR
+-- 6. Devuelve el número de empresas dadas de alta utilizando el campo NIFCIF --- SON LOS CLIENTES
+SELECT * FROM COMPANYIAS_TRANSPORTE			-- PREGUNTAR  
 
 
 -- 7. Devuelve el nombre y apellidos (en una sola columna) de los empleados que trabajan en la tienda 7
@@ -97,9 +97,10 @@ SELECT *
 
 -- 13. Disponemos de una tabla para almacenar el periodo de las campañas de marketing de la empresa.
 -- Obtén qué campaña teníamos activa el día 22 de diciembre
-SELECT *
-  FROM CAMPANYAS										-- PREGUNTAR
- WHERE '2024-12-22' BETWEEN fechaInicio AND fechaFin
+ SELECT * 
+  FROM CAMPANYAS
+ WHERE 22 BETWEEN DAY(fechaInicio) AND DAY(fechaFin)
+   AND 12 BETWEEN MONTH(fechaInicio) AND MONTH(fechaFin)
 
 -- 14. Obtén la información de los 5 primeros clientes cuyo nombre empiece por la letra 'A' y 
 	--su primer apellido por la 'B'
@@ -115,40 +116,60 @@ SELECT  TOP 5 *
   FROM CLIENTES
  WHERE nombre LIKE'A%'
    AND apellidos LIKE 'B%'
-   AND SUBSTRING(apellidos, 1, 2) LIKE 'L%'
+   AND SUBSTRING(apellidos, CHARINDEX(' ', apellidos) + 2, 1) LIKE 'L%'
  ORDER BY codCliente ASC
 
-SELECT SUBSTRING(apellidos, 1, 1) FROM CLIENTES
-
-
 -- 16. Devuelve el precio del producto más barato y el más caro en la misma consulta
-SELECT ;
+SELECT MIN(precioUnitario) MinPrice, MAX(precioUnitario) MaxPrice
+  FROM PRODUCTOS
 
 
 -- 17. Devuelve el número de productos totales que tengan un precio entre 100€ y 200€ (ambos inclusive) -> 
-SELECT ;
+SELECT COUNT(codProducto) NumCodProducto
+  FROM PRODUCTOS
+ WHERE precioUnitario BETWEEN 100 AND 200
+
 
 
 -- 18. Disponemos de una tabla para almacenar qué compañías de transporte trabajan con la empresa y su estado.
 -- Obtén cuántas empresas de transporte tenemos en cada estado.
-SELECT ;
+SELECT COUNT(codTransportista), estadoAlta
+  FROM COMPANYIAS_TRANSPORTE
+ GROUP BY estadoAlta
 
 
 -- 19. Obtén él número de municipios que tenemos en cada provincia (ordenado de mayor a menor)
-SELECT ;
+SELECT COUNT(codMuni) NumMuni, codProv
+  FROM MUNICIPIOS
+ GROUP BY codProv
+ ORDER BY COUNT(codMuni) DESC
 
 
 -- 20. Modifica la consulta anterior para que solo aparezcan aquellas provincias que AL MENOS tengan 250 municipios
-SELECT ;
+SELECT COUNT(codMuni) NumMuni, codProv
+  FROM MUNICIPIOS
+ GROUP BY codProv
+HAVING COUNT(codMuni) >= 250
+ ORDER BY COUNT(codMuni) DESC
 
 
 -- 21. Modifica la consulta anterior para que en lugar del código de la provincia aparezca su nombre
-SELECT ;
+SELECT COUNT(codMuni) NumMuni, p.nombre
+  FROM MUNICIPIOS m, PROVINCIAS p
+ WHERE m.codProv = p.codProv
+ GROUP BY p.nombre
+HAVING COUNT(codMuni) >= 250
+ ORDER BY COUNT(codMuni) DESC
 
 
 -- 22. Modifica la consulta anterior para que en lugar de aparecer los que tengan más de 250 municipios, aparezcan los que tengan
 --		entre 50 y 75 municipios
-SELECT ;
+SELECT COUNT(codMuni) NumMuni, p.nombre
+  FROM MUNICIPIOS m, PROVINCIAS p
+ WHERE m.codProv = p.codProv
+ GROUP BY p.nombre
+HAVING COUNT(codMuni) BETWEEN 50 AND 75
+ ORDER BY COUNT(codMuni) DESC
 
 
 
@@ -156,16 +177,31 @@ SELECT ;
 -- NOTA: Deberá aparecer tanto el nombre de la categoría principal como el nombre de todas las subcategorías
 --			Los nombres de las columnas serán: nombreCat y nombreSubCat
 --			Ordena el resultado alfabéticamente de menor a mayor por el nombre de la subcategoría
-SELECT ;
-
+SELECT c.nombre nombreCat, s.nombre SubCat
+  FROM CATEGORIAS c, SUBCATEGORIAS s
+ WHERE c.codCategoria = s.codCategoria
+   AND c.nombre = 'Series y películas'
+ ORDER BY s.nombre ASC
 
 -- 24. Obtener el nombre de las tiendas y la cantidad en stock, en las que el juego 'PS5 The Eternal Cylinder' se encuentra en stock
 -- Ordénalo por el que tenga mayor cantidad en stock primero
-SELECT ;
+SELECT t.nombre, s.stock
+  FROM TIENDAS t, STOCK_PRODUCTOS s, PRODUCTOS p
+ WHERE t.codTienda = s.codTienda
+   AND s.codProducto = p.codProducto
+   AND p.nombre = 'PS5 The Eternal Cylinder'
+   AND s.stock > 0
+ ORDER BY s.stock DESC
 
 
 -- 25. A partir de la consulta anterior, obtén qué tiendas necesitan solicitar unidades de ese juego a la central
-SELECT ;
+SELECT t.nombre, s.stock
+  FROM TIENDAS t, STOCK_PRODUCTOS s, PRODUCTOS p
+ WHERE t.codTienda = s.codTienda
+   AND s.codProducto = p.codProducto
+   AND p.nombre = 'PS5 The Eternal Cylinder'
+   AND s.stock = 0
+ ORDER BY s.stock DESC
 
 
 -- 26. Obtén el coste medio de los envíos realizados por cada transportista, obteniendo el nombre del transportista y el coste medio

@@ -16,6 +16,13 @@ CREATE TABLE STREAMERS (
     CONSTRAINT PK_STREAMERS PRIMARY KEY (codStreamer)
 )
 
+ALTER TABLE STREAMERS 
+ADD CONSTRAINT CK_STREAMERS_EDAD CHECK(edad BETWEEN 1 AND 150)
+
+CREATE INDEX IX_STREAMERS_nombre
+    ON STREAMERS (nombre)
+
+
 /*
 TEMATICAS (codTematica, nombre)
 PK: codTematica (se incrementa automáticamente)
@@ -40,7 +47,10 @@ CREATE TABLE STREAMERS_TEMATICAS (
     milesSeguidores     DECIMAL(9,2)
 
     CONSTRAINT PK_STREAMERS_TEMATICAS PRIMARY KEY (codStreamer, codTematica),
+    CONSTRAINT FK_STREAMERS_TEMATICAS_STREAMERS FOREIGN KEY (codStreamer) REFERENCES STREAMERS(codStreamer),
+    CONSTRAINT FK_STREAMERS_TEMATICAS_TEMATICAS FOREIGN KEY (codTematica) REFERENCES TEMATICAS(codTematica)
 )
+
 /*
 GESTIÓN DE TABLAS
 Inserta los siguientes STREAMERS:
@@ -117,7 +127,7 @@ SELECT COUNT(codStreamer)
 -- 03, 04, 05. Nombres de streamers cuya segunda letra no sea una "B" (quizá en minúsculas), de 3 formas distintas.
 SELECT nombre
   FROM STREAMERS
- WHERE LEFT(nombre, 2) != 'B'
+ WHERE LEFT(nombre, 2) <> 'B'
 
  SELECT nombre
   FROM STREAMERS
