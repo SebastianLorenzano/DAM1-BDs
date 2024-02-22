@@ -72,6 +72,8 @@ VALUES  (1, 'Ibai', 'Llanos', 'España'),
         (6, 'Alexandre', 'Chappel', 'Noruega'),
         (7, 'Tekendo', null, 'España'),
         (8, 'Caddac Tech', null, null)
+
+SELECT * FROM STREAMERS
 /*
 Inserta los siguientes TEMAS:
 -	Informática
@@ -102,14 +104,16 @@ STREAMER	TEMATICA	idioma	medio	milesSeguidores
 6 'Bricolaje'	'Inglés'	'YouTube'	370
 8 'Informática'	'Inglés'	'YouTube'	3
 */
+SELECT * FROM TEMATICAS
+
 INSERT INTO STREAMERS_TEMATICAS (codStreamer, codTematica, idioma, medio, milesSeguidores)
-VALUES  (1, 'Variado', 'Español', 'Twitch', 12800),
-        (2, 'Variado', 'Español', 'Twitch', 14900),
-        (3, 'Informática', 'Español', 'YouTube', 2450),
-        (4, 'Informática', 'Inglés', 'YouTube', 15200),
-        (5, 'Bricolaje', 'Inglés', 'YouTube', 4140),
-        (6, 'Bricolaje', 'Inglés', 'YouTube', 370),
-        (8, 'Informática', 'Inglés', 'YouTube', 3)
+VALUES  (1, 4, 'Español', 'Twitch', 12800),
+        (2, 4, 'Español', 'Twitch', 14900),
+        (3, 1, 'Español', 'YouTube', 2450),
+        (4, 1, 'Inglés', 'YouTube', 15200),
+        (5, 5, 'Inglés', 'YouTube', 4140),
+        (6, 5, 'Inglés', 'YouTube', 370),
+        (8, 1, 'Inglés', 'YouTube', 3)
 
         
 
@@ -127,43 +131,91 @@ SELECT COUNT(codStreamer)
 -- 03, 04, 05. Nombres de streamers cuya segunda letra no sea una "B" (quizá en minúsculas), de 3 formas distintas.
 SELECT nombre
   FROM STREAMERS
- WHERE LEFT(nombre, 2) <> 'B'
+ WHERE RIGHT(LEFT(nombre, 2), 1) NOT IN ('b', 'B')
 
  SELECT nombre
   FROM STREAMERS
- WHERE LEFT(nombre, 2) NOT LIKE '%B%'
+ WHERE nombre NOT LIKE '%_B%'
+   OR nombre NOT LIKE '%_b%'
 
  SELECT nombre 
    FROM STREAMERS
-  WHERE SUBSTRING(nombre, 2, 1) NOT LIKE '%B%'
+  WHERE SUBSTRING(nombre, 2, 1) NOT IN ('b', 'B') 
 -- 06. Media de suscriptores para los canales cuyo idioma es "Español".
 SELECT AVG(st.milesSeguidores)
   FROM STREAMERS_TEMATICAS st, STREAMERS s
  WHERE s.codStreamer = st.codStreamer
    AND st.idioma LIKE '%Español%'
 -- 07. Media de seguidores para los canales cuyo streamer es del país "España".
-
--- 08. Nombre de cada streamer y medio en el que habla, para aquellos que tienen entre 5.000 y 15.000 miles de seguidores, usando BETWEEN.
-
+SELECT s.nombre
+  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+ WHERE s.codStreamer = st.codStreamer
+   AND s.pais = 'España'
+-- 08. Nombre de cada streamer y medio en el que habla, para aquellos que tienen entre 5.000 y 15.000 miles de seguidores, 
+    --usando BETWEEN.
+SELECT s.nombre, st.medio
+  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+ WHERE s.codStreamer = st.codStreamer
+   AND milesSeguidores BETWEEN 5000 AND 15000
 -- 09. Nombre de cada streamer y medio en el que habla, para aquellos que tienen entre 5.000 y 15.000 miles de seguidores, sin usar BETWEEN.
-
+SELECT s.nombre, st.medio
+  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+ WHERE s.codStreamer = st.codStreamer
+   AND milesSeguidores >= 5000
+   AND milesSeguidores <= 15000
 -- 10. Nombre de cada temática y nombre de los idiomas en que tenemos canales de esa temática 
 --(quizá ninguno), sin duplicados.
-
+SELECT DISTINCT t.nombre, st.idioma
+  FROM TEMATICAS t, STREAMERS_TEMATICAS st 
+ WHERE t.codTematica = st.codTematica
+  
 -- 11. Nombre de cada streamer, nombre de la temática de la que habla y del medio en el que habla de esa temática, usando INNER JOIN.
-
+SELECT s.nombre, st.codTematica, st.medio
+  FROM STREAMERS s INNER JOIN STREAMERS_TEMATICAS st
+    ON s.codStreamer = st.codStreamer
 -- 12. Nombre de cada streamer, nombre de la temática de la que habla y del medio en el que habla de esa temática, usando WHERE.
-
--- 13. Nombre de cada streamer, del medio en el que habla y de la temática de la que habla en ese medio, incluso si de algún streamer no tenemos dato del medio o de la temática.
-
+SELECT s.nombre, st.codTematica, st.medio
+  FROM STREAMERS s,
+        STREAMERS_TEMATICAS st
+ WHERE s.codStreamer = st.codStreamer
+-- 13. Nombre de cada streamer, del medio en el que habla y de la temática de la que habla en ese medio, 
+  --incluso si de algún streamer no tenemos dato del medio o de la temática.
+SELECT s.nombre, st.codTematica, st.medio
+  FROM STREAMERS s LEFT JOIN STREAMERS_TEMATICAS st
+    ON s.codStreamer = st.codStreamer
 -- 14. Nombre de cada medio y cantidad de canales que tenemos anotados en él, ordenado alfabéticamente por el nombre del medio.
+SELECT c.medio, COUNT(c.medio)
+  FROM STREAMERS_TEMATICAS c
+ GROUP BY c.medio
+ ORDER BY c.medio ASC
 
 -- 15, 16, 17, 18. Medio en el que se emite el canal de más seguidores, de 4 formas distintas.
+SELECT c.medio
+  FROM STREAMERS_TEMATICAS c
+ WHERE milesSeguidores >= ALL (SELECT milesSeguidores FROM STREAMERS_TEMATICAS)
 
+ SELECT c.medio
+  FROM STREAMERS_TEMATICAS c
+ WHERE milesSeguidores = (SELECT MAX(milesSeguidores) FROM STREAMERS_TEMATICAS)
+
+SELECT TOP(1) medio 
+  FROM STREAMERS_TEMATICAS
+ ORDER BY milesSeguidores DESC
+ 
+
+SELECT c.medio
+  FROM STREAMERS_TEMATICAS c
+ WHERE EXISTS (SELECT 1 FROM STREAMERS_TEMATICAS ci
+                  AND c.medio = ci.medio)
+ 
 -- 19. Categorías de las que tenemos 2 o más canales.
 
 -- 20. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando COUNT.
-
+SELECT t.nombre
+  FROM TEMATICAS t LEFT JOIN STREAMERS_TEMATICAS c 
+    ON t.codTematica = c.codTematica 
+ GROUP BY t.codTematica, t.nombre
+HAVING COUNT(t.codTematica) = 0
 -- 21. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando IN / NOT IN.
 
 -- 22. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando ALL / ANY.
@@ -238,3 +290,10 @@ SELECT AVG(st.milesSeguidores)
 -- 59. Muestra el nombre de cada streamer y el país de origen. Si no se sabe este dato, deberá aparecer "(País desconocido)".
 
 -- 60. Muestra, para cada streamer, su nombre, el medio en el que emite (precedido por "Emite en: ") y el idioma de su canal (precedido por "Idioma: ")
+
+SELECT s.nombre,
+       CONCAT('Emite en: ', c.medio),
+       CONCAT('Idioma: ', c.idioma)
+  FROM STREAMERS_TEMATICAS c,
+       STREAMERS s
+ WHERE c.codStreamer = s.codStreamer
