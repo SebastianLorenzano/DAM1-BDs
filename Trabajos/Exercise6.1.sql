@@ -193,11 +193,11 @@ SELECT *
     --Verify that the data has been moved correctly.
 
 UPDATE CLIENTES
-SET pais = null, codPostal = null     -- Region cannot be null
+SET pais = null, codPostal = null     
+SELECT * FROM CLIENTES	
 
-
-UPDATE CLIENTES
-SET cli.codPostal = hispostalCodeData, cli.pais = his.pais, cli.region = his.region
+UPDATE cli
+SET cli.codPostal = his.codPostal, cli.pais = his.pais
 FROM CLIENTES cli INNER JOIN HISTORICO_CLIENTES his ON cli.codCliente = his.codCliente;
 
 
