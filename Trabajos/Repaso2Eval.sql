@@ -34,21 +34,21 @@ CREATE TABLE TEMATICAS (
     CONSTRAINT PK_TEMATICAS PRIMARY KEY (codTematica)
 )
 /*
-STREAMERS_TEMATICAS (codStreamer, codTematica, idioma, medio, milesSeguidores)
+CANALES (codStreamer, codTematica, idioma, medio, milesSeguidores)
 PK: codStreamer, codTematica
 FK: codStreamer  STREAMERS
 FK: codTematica  TEMATICAS
 */
-CREATE TABLE STREAMERS_TEMATICAS (
+CREATE TABLE CANALES (
     codStreamer INT,
     codTematica INT,
     idioma      VARCHAR(200),
     medio       VARCHAR(200),
     milesSeguidores     DECIMAL(9,2)
 
-    CONSTRAINT PK_STREAMERS_TEMATICAS PRIMARY KEY (codStreamer, codTematica),
-    CONSTRAINT FK_STREAMERS_TEMATICAS_STREAMERS FOREIGN KEY (codStreamer) REFERENCES STREAMERS(codStreamer),
-    CONSTRAINT FK_STREAMERS_TEMATICAS_TEMATICAS FOREIGN KEY (codTematica) REFERENCES TEMATICAS(codTematica)
+    CONSTRAINT PK_CANALES PRIMARY KEY (codStreamer, codTematica),
+    CONSTRAINT FK_CANALES_STREAMERS FOREIGN KEY (codStreamer) REFERENCES STREAMERS(codStreamer),
+    CONSTRAINT FK_CANALES_TEMATICAS FOREIGN KEY (codTematica) REFERENCES TEMATICAS(codTematica)
 )
 
 /*
@@ -106,7 +106,7 @@ STREAMER	TEMATICA	idioma	medio	milesSeguidores
 */
 SELECT * FROM TEMATICAS
 
-INSERT INTO STREAMERS_TEMATICAS (codStreamer, codTematica, idioma, medio, milesSeguidores)
+INSERT INTO CANALES (codStreamer, codTematica, idioma, medio, milesSeguidores)
 VALUES  (1, 4, 'Español', 'Twitch', 12800),
         (2, 4, 'Español', 'Twitch', 14900),
         (3, 1, 'Español', 'YouTube', 2450),
@@ -143,88 +143,98 @@ SELECT nombre
   WHERE SUBSTRING(nombre, 2, 1) NOT IN ('b', 'B') 
 -- 06. Media de suscriptores para los canales cuyo idioma es "Español".
 SELECT AVG(st.milesSeguidores)
-  FROM STREAMERS_TEMATICAS st, STREAMERS s
+  FROM CANALES st, STREAMERS s
  WHERE s.codStreamer = st.codStreamer
    AND st.idioma LIKE '%Español%'
 -- 07. Media de seguidores para los canales cuyo streamer es del país "España".
 SELECT s.nombre
-  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+  FROM STREAMERS s, CANALES st 
  WHERE s.codStreamer = st.codStreamer
    AND s.pais = 'España'
 -- 08. Nombre de cada streamer y medio en el que habla, para aquellos que tienen entre 5.000 y 15.000 miles de seguidores, 
     --usando BETWEEN.
 SELECT s.nombre, st.medio
-  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+  FROM STREAMERS s, CANALES st 
  WHERE s.codStreamer = st.codStreamer
    AND milesSeguidores BETWEEN 5000 AND 15000
 -- 09. Nombre de cada streamer y medio en el que habla, para aquellos que tienen entre 5.000 y 15.000 miles de seguidores, sin usar BETWEEN.
 SELECT s.nombre, st.medio
-  FROM STREAMERS s, STREAMERS_TEMATICAS st 
+  FROM STREAMERS s, CANALES st 
  WHERE s.codStreamer = st.codStreamer
    AND milesSeguidores >= 5000
    AND milesSeguidores <= 15000
 -- 10. Nombre de cada temática y nombre de los idiomas en que tenemos canales de esa temática 
 --(quizá ninguno), sin duplicados.
 SELECT DISTINCT t.nombre, st.idioma
-  FROM TEMATICAS t, STREAMERS_TEMATICAS st 
+  FROM TEMATICAS t, CANALES st 
  WHERE t.codTematica = st.codTematica
   
 -- 11. Nombre de cada streamer, nombre de la temática de la que habla y del medio en el que habla de esa temática, usando INNER JOIN.
 SELECT s.nombre, st.codTematica, st.medio
-  FROM STREAMERS s INNER JOIN STREAMERS_TEMATICAS st
+  FROM STREAMERS s INNER JOIN CANALES st
     ON s.codStreamer = st.codStreamer
 -- 12. Nombre de cada streamer, nombre de la temática de la que habla y del medio en el que habla de esa temática, usando WHERE.
 SELECT s.nombre, st.codTematica, st.medio
   FROM STREAMERS s,
-        STREAMERS_TEMATICAS st
+        CANALES st
  WHERE s.codStreamer = st.codStreamer
 -- 13. Nombre de cada streamer, del medio en el que habla y de la temática de la que habla en ese medio, 
   --incluso si de algún streamer no tenemos dato del medio o de la temática.
 SELECT s.nombre, st.codTematica, st.medio
-  FROM STREAMERS s LEFT JOIN STREAMERS_TEMATICAS st
+  FROM STREAMERS s LEFT JOIN CANALES st
     ON s.codStreamer = st.codStreamer
 -- 14. Nombre de cada medio y cantidad de canales que tenemos anotados en él, ordenado alfabéticamente por el nombre del medio.
 SELECT c.medio, COUNT(c.medio)
-  FROM STREAMERS_TEMATICAS c
+  FROM CANALES c
  GROUP BY c.medio
  ORDER BY c.medio ASC
 
 -- 15, 16, 17, 18. Medio en el que se emite el canal de más seguidores, de 4 formas distintas.
 SELECT c.medio
-  FROM STREAMERS_TEMATICAS c
- WHERE milesSeguidores >= ALL (SELECT milesSeguidores FROM STREAMERS_TEMATICAS)
+  FROM CANALES c
+ WHERE milesSeguidores >= ALL (SELECT milesSeguidores FROM CANALES)
 
  SELECT c.medio
-  FROM STREAMERS_TEMATICAS c
- WHERE milesSeguidores = (SELECT MAX(milesSeguidores) FROM STREAMERS_TEMATICAS)
+  FROM CANALES c
+ WHERE milesSeguidores = (SELECT MAX(milesSeguidores) FROM CANALES)
 
 SELECT TOP(1) medio 
-  FROM STREAMERS_TEMATICAS
+  FROM CANALES
  ORDER BY milesSeguidores DESC
  
-
-SELECT c.medio
-  FROM STREAMERS_TEMATICAS c
- WHERE EXISTS (SELECT 1 FROM STREAMERS_TEMATICAS ci
-                  AND c.medio = ci.medio)
- 
 -- 19. Categorías de las que tenemos 2 o más canales.
-
--- 20. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando COUNT.
+SELECT t.nombre, COUNT(c.codTematica) cantStreamers
+  FROM CANALES c, TEMATICAS t
+ WHERE c.codTematica = t.codTematica
+ GROUP BY t.codTematica, t.nombre
+ HAVING (COUNT(c.codTematica) >= 2)
+-- 20. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, 
+  --empleando COUNT.
 SELECT t.nombre
-  FROM TEMATICAS t LEFT JOIN STREAMERS_TEMATICAS c 
+  FROM TEMATICAS t LEFT JOIN CANALES c 
     ON t.codTematica = c.codTematica 
  GROUP BY t.codTematica, t.nombre
 HAVING COUNT(t.codTematica) = 0
--- 21. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando IN / NOT IN.
+-- 21. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, 
+--empleando IN / NOT IN.
+SELECT t.nombre
+  FROM TEMATICAS t
+ WHERE t.codTematica NOT IN (SELECT codTematica FROM CANALES)
 
 -- 22. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando ALL / ANY.
-
+SELECT t.nombre
+  FROM TEMATICAS t
+ WHERE t.codTematica <> ALL (SELECT codTematica FROM CANALES)
 -- 23. Categorías de las que no tenemos anotado ningún canal, ordenadas alfabéticamente, empleando EXISTS / NOT EXISTS.
-
+SELECT t.nombre
+  FROM TEMATICAS t
+ WHERE NOT EXISTS(SELECT 1 FROM CANALES c WHERE c.codTematica = t.codTematica)
 -- 24. Tres primeras letras de cada país y tres primeras letras de cada idioma, en una misma lista.
-
+SELECT s.pais
+  FROM STREAMERS s, CANALES c
+ WHERE LEFT(s.pais, 2) LIKE LEFT(c.idioma, 2)
 -- 25, 26, 27, 28. Tres primeras letras de países que coincidan con las tres primeras letras de un idioma, sin duplicados, de cuatro formas distintas.
+
 
 -- 29. Nombre de streamer, nombre de medio y nombre de temática, para los canales que están por encima de la media de suscriptores.
 
@@ -294,6 +304,6 @@ HAVING COUNT(t.codTematica) = 0
 SELECT s.nombre,
        CONCAT('Emite en: ', c.medio),
        CONCAT('Idioma: ', c.idioma)
-  FROM STREAMERS_TEMATICAS c,
+  FROM CANALES c,
        STREAMERS s
  WHERE c.codStreamer = s.codStreamer

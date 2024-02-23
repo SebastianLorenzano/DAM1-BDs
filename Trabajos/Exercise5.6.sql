@@ -240,6 +240,13 @@ SELECT ;
 -- IMPORTANTE: si un cliente no ha realizado ningún pedido aparecerá igualmente con 0 pedidos y 0 € gastados
 -- Los campos a obtener en la consulta son los mismos que los de la consulta anterior.
 -- Nivel: DIFICIL
+-- 30. Obtén el número de pedidos realizados por cada cliente y el total gastado en todos los pedidos
+-- IMPORTANTE: si un cliente no ha realizado ningún pedido aparecerá igualmente con 0 pedidos 
+--y 0 € gastados los campos a obtener en la consulta son los mismos que los de la consulta anterior
+SELECT COUNT(DISTINCT(p.codPedido)), SUM(l.totalLinea)
+  FROM PEDIDOS p LEFT JOIN LINEAS_PEDIDOS l
+    ON p.codPedido = l.codPedido
+ GROUP BY p.codCliente
 
 -- Ayuda: al introducir la tabla LINEA_PEDIDO es posible que el mismo codPedido se cuente varias veces (uno por línea)
 --		por lo que sería interesante que te asegures de que sean DIFERENTES antes de CONTARLOS ;-)
