@@ -26,3 +26,6 @@ DECLARE @precioMax DECIMAL(9,2)
   SELECT MIN(precio_venta)
   FROM PRODUCTOS
  WHERE codCategoria = @codCategoria
+
+
+e
