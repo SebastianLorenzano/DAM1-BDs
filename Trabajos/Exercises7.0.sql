@@ -18,9 +18,15 @@ USE JARDINERIA
 -- Salida: 'La gama que más productos tiene es Ornamentales'
 -------------------------------------------------------------------------------------------
 DECLARE @nombreGama VARCHAR(50)
-SELECT * FROM PRODUCTOS
-SELECT @nombreGama 
-  FROM PRODUCTOS p
+SELECT @nombreGama = c.nombre
+  FROM PRODUCTOS p INNER JOIN CATEGORIA_PRODUCTOS c
+    ON p.codCategoria = c.codCategoria
+ WHERE p.codCategoria = (SELECT TOP(1) codCategoria
+                           FROM PRODUCTOS
+                          GROUP BY codCategoria
+                          ORDER BY COUNT(codCategoria) DESC               
+      )
+PRINT CONCAT('La gama que más productos tiene es ', @nombreGama)
 
 
 
@@ -82,7 +88,22 @@ SELECT @cantPedidos = COUNT(codPedido)
 --
 -- Salida: 'El pedido XXXX realizado por el cliente YYYYYYY se realizó el ZZ/ZZ/ZZZZ y su estado es EEEEEEEE
 -------------------------------------------------------------------------------------------
+DECLARE @codPedido INT
+  SET @codPedido = NEWID(PRODUCTOS)
+DECLARE @nombre_cliente VARCHAR(100)
+DECLARE @FechaPedido DATE
+DECLARE @estado CHAR(1)
+SELECT @codPedido = p.codPedido,
+       @nombre_cliente = nombre_cliente,
+       @FechaPedido = p.fecha_pedido,
+       @estado = p.codEstado
+  FROM CLIENTES c INNER JOIN PEDIDOS p
+    ON c.codCliente = p.codCliente
+   AND p.codPedido = @codPedido
 
+
+PRINT CONCAT('El pedido ', @codPedido, ' realizado por el cliente ',
+             @nombre_cliente, ' se realizo el ', @FechaPedido, ' y su estado es ', @estado) 
 
 
 
