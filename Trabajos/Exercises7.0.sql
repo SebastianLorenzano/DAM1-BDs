@@ -134,3 +134,53 @@ PRINT CONCAT('El pedido ', @codPedido, ' realizado por el cliente ',
 --	
 -- Salida: 'El cliente XXXX tiene como representante a YYYY y trabaja en la ciudad de ZZZZ'
 -------------------------------------------------------------------------------------------
+
+
+
+USE JARDINERIA
+
+
+
+DECLARE @i INT = 1
+
+/*
+WHILE @i <= 30
+BEGIN
+    IF @i % 5 = 0
+    BEGIN
+        PRINT @i
+    END
+    SET @i += 1
+END
+*/
+WHILE @i <= 200
+BEGIN
+    IF @i % 7 = 0 AND @i <> 7
+    BEGIN
+        PRINT @i
+        BREAK
+    END
+    SET @i += 1
+END
+
+DECLARE @minCodCliente INT
+DECLARE @maxCodCliente INT
+
+DECLARE @nombreCliente VARCHAR(50)
+
+SELECT @minCodCliente = MIN(codCliente),
+       @maxCodCliente = MAX(codCliente)
+  FROM CLIENTES
+
+WHILE @minCodCliente <= @maxCodCliente
+BEGIN
+    SET @nombreCliente = NULL
+    SELECT @nombreCliente = nombre_cliente
+      FROM CLIENTES
+     WHERE codCliente = @minCodCliente
+    IF @nombreCliente IS NOT NULL
+    BEGIN
+        PRINT(@nombreCliente) 
+    END
+    SET @minCodCliente += 1
+END
