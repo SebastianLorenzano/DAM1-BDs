@@ -16,7 +16,8 @@
 --
 --		Si el número o la potencia son 0 o <0 devolverá el mensaje: “La operación no se puede realizar.
 -------------------------------------------------------------------------------------------
-DECLARE @number1 INT = 3, @number2 INT = 2
+GO
+DECLARE @number1 INT = 3, @number2 INT = 4
 DECLARE @numericResult INT = @number1
 DECLARE @result VARCHAR(600) 
 	PRINT 'Hola1'
@@ -28,28 +29,19 @@ ELSE
 BEGIN
 	PRINT 'Hola3'
 	SET @result = CONCAT('Número = ', @number1, '    Potencia = ', @number2, '    Resultado = ')
+	SET @number2 -= 1
+	SET @result += CAST(@number1 AS VARCHAR)
 	WHILE (@number2 > 0)
 	BEGIN
 		SET @numericResult *= @number1
 		SET @number2 -= 1
-		IF (@number2 > 0)
-		BEGIN
-			SET @result += CONCAT(@number1, '*')
-		END
-		ELSE
-		BEGIN
-			SET @result += CONCAT(@number1, ' = ', @numericResult)
-		END
+		SET @result += CONCAT('*', @number1)
 	END
+	SET @result += CONCAT(' = ', @numericResult)
 END
 PRINT @result
 
-
-
-
-
-
--------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
 -- 2. Crea un script que calcule las soluciones de una ecuación de segundo grado ax^2 + bx + c = 0
 --
 --	Debes crear variables para los valores a, b y c.
@@ -63,6 +55,22 @@ PRINT @result
 --	
 --	NOTA: Si no sale lo mismo, te recomiendo revisar bien el orden de prioridad de los operadores... ()
 -------------------------------------------------------------------------------------------
+
+GO
+DECLARE @a INT = 3, @b INT = -4, @c INT = 1
+DECLARE @sol1 DECIMAL(9,2), @sol2 DECIMAL(9,2)
+
+IF (@a < 0 OR @c < 0)
+BEGIN
+	PRINT 'Cálculo no implementado'
+END
+ELSE
+BEGIN
+	SET @sol1 = (-@b + SQRT(@b*@b - 4 * @a *@c))/ (2 * @a)
+	SET @sol2 = (-@b - SQRT(@b*@b - 4 * @a *@c))/ (2 * @a)
+	PRINT CONCAT('a=', @a, ', b=', @b, ', c=', @c, ', --> sol1= ' ,@sol1 , ' y sol2= ' ,@sol2)
+END
+
 
 
 
@@ -83,6 +91,27 @@ PRINT @result
 --	Ayuda: Quizás necesites guardar en algún sitio el valor actual de la serie antes de sumarlo...
 -------------------------------------------------------------------------------------------
 
+GO
+DECLARE @n INT = 14
+DECLARE @number1 INT = 1, @number2 INT = 0, @number3 INT
+DECLARE @result VARCHAR(600)
+WHILE @n > 0
+BEGIN
+	SET @number3 = @number1 + @number2
+	IF @result IS NULL
+	BEGIN
+		SET @result = @number3
+	END
+	ELSE
+	BEGIN
+		SET @result += CONCAT(',', @number3)
+	END
+	SET @number2 = @number1
+	SET @number1 = @number3
+	SET @n -= 1
+END
+PRINT @result
+
 
 
 -------------------------------------------------------------------------------------------
@@ -91,12 +120,27 @@ PRINT @result
 --		Obtén el número de pedidos realizados por dicho cliente y guárdalo en una variable
 --		Muestra por pantalla el mensaje: 'El cliente XXXX ha realizado YYYY pedidos.'
 --		
---		result
- esperado: El cliente Gardening Associates ha realizado 9 pedidos.
+--		result esperado: El cliente Gardening Associates ha realizado 9 pedidos.
 --
 --	    Reto opcional: Implementa el script utilizando una única consulta.
 -------------------------------------------------------------------------------------------
 
+GO
+DECLARE @codCliente INT = 3, @numPedidos INT
+DECLARE @nombreCliente VARCHAR(50)
+
+SELECT @nombreCliente = c.nombre_cliente,
+	   @numPedidos = COUNT(codPedido)
+  FROM CLIENTES c,
+       PEDIDOS p
+ WHERE c.codCliente = p.codCliente
+   AND c.codCliente = @codCliente
+ GROUP BY c.codCliente, c.nombre_cliente
+
+IF @nombreCliente IS NOT NULL
+BEGIN
+	PRINT CONCAT('El cliente ', @nombreCliente, ' ha realizado ', @numPedidos,' pedido/s.')
+END
 
 
 -------------------------------------------------------------------------------------------
@@ -118,7 +162,24 @@ PRINT @result
 --			Walton , John
 -------------------------------------------------------------------------------------------
 
+GO
+DECLARE @min INT, @max INT
+DECLARE @nombreEmpleado VARCHAR(153)
 
+SELECT @min = MIN(codEmpleado),
+	   @max = MAX(codEmpleado)
+  FROM EMPLEADOS
+
+WHILE @min != @max
+BEGIN
+
+	SELECT @nombreEmpleado = CONCAT(apellido1, ' ',apellido2, ', ', nombre)
+	  FROM EMPLEADOS
+	 WHERE codEmpleado = @min
+
+	PRINT @nombreEmpleado
+	SET @min += 1
+END
 
 -------------------------------------------------------------------------------------------
 -- 6. Utilizando la BD JARDINERIA, crea un script que realice lo siguiente:
@@ -147,6 +208,43 @@ PRINT @result
 -------------------------------------------------------------------------------------------
 
 
+GO
+DECLARE @min INT, @max INT
+DECLARE @nombreCliente VARCHAR(153)
+DECLARE @cantPedidos INT, @total DECIMAL(9,2) = 0
+
+SELECT @min = MIN(codCliente),
+	   @max = MAX(codCliente)
+  FROM CLIENTES
+
+WHILE @min != @max
+BEGIN
+	SET @nombreCliente = null
+	SELECT @nombreCliente = nombre_cliente
+	  FROM CLIENTES
+	 WHERE codCliente = @min
+
+	SELECT @cantPedidos = COUNT(codPedido)
+	  FROM PEDIDOS 
+	 WHERE codCliente = @min
+	 GROUP BY codCliente
+	
+	SELECT @total += (cantidad * precio_unidad)
+	  FROM DETALLE_PEDIDOS
+	 WHERE codPedido IN (SELECT codPedido
+	 					   FROM PEDIDOS
+						  WHERE codCliente = @min 
+						   )
+
+
+	IF @nombreCliente IS NOT NULL
+	BEGIN
+	PRINT CONCAT('El cliente ', @nombreCliente, ' ha realizado ', @cantPedidos, ' pedidos por un coste total de ', @total, '.')
+	END
+	SET @min += 1
+END
+
+
 -------------------------------------------------------------------------------------------
 -- 7. Utilizando la BD JARDINERIA, crea un script que realice las siguientes operaciones:
 --	Importante: debes utilizar TRY/CATCH y Transacciones si fueran necesarias.
@@ -156,8 +254,48 @@ PRINT @result
 --		Crea un nuevo cliente (datos inventados) (el codCliente a insertar debes obtenerlo automáticamente)
 --		Asigna como representante de ventas el cliente anterior
 -------------------------------------------------------------------------------------------
+GO
+SET IMPLICIT_TRANSACTIONS OFF
+DECLARE @codEmpleado INT, @codCliente INT
 
+BEGIN TRY
+	BEGIN TRAN
+	
+	INSERT INTO OFICINAS (codOficina, ciudad, pais, codPostal, telefono, linea_direccion1, linea_direccion2)
+	VALUES ('BSA-AR', 'CABA', 'Argentina', '1876', '39472318', 'Yapeyu 746', 'Esquina 25 de Mayo')
 
+	INSERT INTO EMPLEADOS(nombre, apellido1, apellido2, tlf_extension_ofi, email, puesto_cargo, salario, codOficina, codEmplJefe)
+	VALUES ('Sebastian', 'Lorenzano', null, '39472318', 'selorenzano1@gmail.com', 'Jefe de oficina', 50000, 'BSA-AR', null)
+
+	INSERT INTO CLIENTES (nombre_cliente, nombre_contacto, apellido_contacto, telefono, email, linea_direccion1, linea_direccion2, ciudad, pais, codPostal, codEmpl_Ventas, limite_credito)
+	VALUES ('Jardinero S.A.', 'Juan', 'Perez', '81327493', 'pepelord@gmail.com', 'Av. Rivadavia 1234', 'Esquina Av. Corrientes', 'Buenos Aires', 'Argentina', '1876',  null, 10000)
+
+	SELECT @codEmpleado = codEmpleado
+	  FROM EMPLEADOS
+	 WHERE nombre = 'Sebastian'
+	   AND apellido1 = 'Lorenzano'
+	   AND email = 'selorenzano1@gmail.com'
+
+	SELECT @codCliente = codCliente
+	  FROM CLIENTES
+	 WHERE nombre_cliente = 'Jardinero S.A.'
+	   AND email = 'pepelord@gmail.com'
+
+	UPDATE CLIENTES
+	SET codEmpl_Ventas = @codEmpleado
+	WHERE codCliente = @codCliente
+
+	COMMIT
+END TRY
+
+BEGIN CATCH
+	ROLLBACK
+	PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				  ', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				  ', LINEA: ', ERROR_LINE())
+END CATCH
+
+SET IMPLICIT_TRANSACTIONS ON
 
 -------------------------------------------------------------------------------------------
 -- 8. Utilizando la BD JARDINERIA, crea un script que realice las siguientes operaciones:
