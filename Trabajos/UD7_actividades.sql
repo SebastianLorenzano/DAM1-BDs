@@ -392,7 +392,7 @@ DECLARE @codCliente INT, @codPedido INT,
 @codProducto1 INT = 1, @precioProducto1 DECIMAL(9,2), @cantidadProducto1 INT = 3,
 @codProducto2 INT = 2, @precioProducto2 DECIMAL(9,2), @cantidadProducto2 INT = 2,
 @totalPago DECIMAL(9,2),
-@numTransaccion INT, @idTransaccion VARCHAR(15)
+@idTransaccion CHAR(15)
 	
 BEGIN TRY
 
@@ -412,15 +412,10 @@ BEGIN TRY
 
 	SET @totalPago = @precioProducto1 * @cantidadProducto1 + @precioProducto2 * @cantidadProducto2
 
-	SELECT @numTransaccion = MAX(RIGHT(id_transaccion, 8)) + 1,
-           @idTransaccion = MAX(RIGHT(id_transaccion, 8)) + 1
-  	  FROM PAGOS
-
-	WHILE LEN(@idTransaccion) < 8
-	BEGIN
-		SET @idTransaccion = CONCAT(0,@idTransaccion)
-	END
-	SET @idTransaccion = CONCAT('ak-std-',@idTransaccion)
+	SELECT @idTransaccion = CONCAT(LEFT(MAX(id_transaccion), 7),
+							       REPLICATE('0', LEN(RIGHT(MAX(id_transaccion), 8) + 1)),
+								   RIGHT(MAX(id_transaccion), 8) + 1)
+	  FROM PAGOS
 
 	BEGIN TRAN
 	
