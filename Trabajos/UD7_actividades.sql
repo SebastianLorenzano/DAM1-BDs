@@ -258,28 +258,44 @@ GO
 SET IMPLICIT_TRANSACTIONS OFF
 DECLARE @codEmpleado INT, @codCliente INT
 
+
 BEGIN TRY
+	SELECT @codEmpleado = MAX(codEmpleado) + 1
+	FROM EMPLEADOS
+	SELECT @codCliente = MAX(codCliente) + 1
+	FROM CLIENTES
+
 	BEGIN TRAN
 	
 	INSERT INTO OFICINAS (codOficina, ciudad, pais, codPostal, telefono, linea_direccion1, linea_direccion2)
 	VALUES ('BSA-AR', 'CABA', 'Argentina', '1876', '39472318', 'Yapeyu 746', 'Esquina 25 de Mayo')
 
-	INSERT INTO EMPLEADOS(nombre, apellido1, apellido2, tlf_extension_ofi, email, puesto_cargo, salario, codOficina, codEmplJefe)
-	VALUES ('Sebastian', 'Lorenzano', null, '39472318', 'selorenzano1@gmail.com', 'Jefe de oficina', 50000, 'BSA-AR', null)
+	INSERT INTO EMPLEADOS(codEmpleado, nombre, apellido1, apellido2, tlf_extension_ofi, email, puesto_cargo, salario, codOficina, codEmplJefe)
+	VALUES (@codEmpleado, 'Sebastian', 'Lorenzano', null, '00001', 'selorenzano1@gmail.com', 'Jefe de oficina', 50000, 'BSA-AR', null)
 
-	INSERT INTO CLIENTES (nombre_cliente, nombre_contacto, apellido_contacto, telefono, email, linea_direccion1, linea_direccion2, ciudad, pais, codPostal, codEmpl_Ventas, limite_credito)
-	VALUES ('Jardinero S.A.', 'Juan', 'Perez', '81327493', 'pepelord@gmail.com', 'Av. Rivadavia 1234', 'Esquina Av. Corrientes', 'Buenos Aires', 'Argentina', '1876',  null, 10000)
+	INSERT INTO CLIENTES (codCliente, nombre_cliente, nombre_contacto, apellido_contacto, telefono, email, linea_direccion1, linea_direccion2, ciudad, pais, codPostal, codEmpl_Ventas, limite_credito)
+	VALUES (@codcliente, 'Jardinero S.A.', 'Juan', 'Perez', '81327493', 'pepelord@gmail.com', 'Av. Rivadavia 1234', 'Esquina Av. Corrientes', 'Buenos Aires', 'Argentina', '1876',  null, 10000)
+
+-- Si despues tuviese que conseguir ese codEmpleado y ese codCliente sin tenerlo, pero si sabiendo los datos.
 
 	SELECT @codEmpleado = codEmpleado
 	  FROM EMPLEADOS
 	 WHERE nombre = 'Sebastian'
 	   AND apellido1 = 'Lorenzano'
+	   AND tlf_extension_ofi = '00001'
 	   AND email = 'selorenzano1@gmail.com'
+	   AND puesto_cargo = 'Jefe de oficina'
+	   AND codOficina = 'BSA-AR'
 
 	SELECT @codCliente = codCliente
 	  FROM CLIENTES
 	 WHERE nombre_cliente = 'Jardinero S.A.'
+	   AND nombre_contacto = 'Juan'
+	   AND apellido_contacto = 'Perez'
 	   AND email = 'pepelord@gmail.com'
+	   AND linea_direccion1 = 'Av. Rivadavia 1234'
+	   AND linea_direccion2 = 'Esquina Av. Corrientes'
+	   AND ciudad = 'Buenos Aires'
 
 	UPDATE CLIENTES
 	SET codEmpl_Ventas = @codEmpleado
@@ -293,10 +309,13 @@ BEGIN CATCH
 	PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
  				  ', DESCRIPCION: ', ERROR_MESSAGE(),
  				  ', LINEA: ', ERROR_LINE())
+	RETURN
 END CATCH
 
 SET IMPLICIT_TRANSACTIONS ON
 
+
+--SELECT * FROM OFICINAS
 -------------------------------------------------------------------------------------------
 -- 8. Utilizando la BD JARDINERIA, crea un script que realice las siguientes operaciones:
 --	Importante: debes utilizar TRY/CATCH y Transacciones si fueran necesarias.
@@ -305,7 +324,45 @@ SET IMPLICIT_TRANSACTIONS ON
 --		Debes crear variables con los identificadores de clave primaria para eliminar
 --			todos los datos de cada una de las tablas en una sola ejecución
 -------------------------------------------------------------------------------------------
+GO
+SET IMPLICIT_TRANSACTIONS OFF
+DECLARE @codEmpleado INT, @codCliente INT, @codOficina CHAR(6) = 'BSA-AR'
 
+BEGIN TRY
+	BEGIN TRAN
+	
+	SELECT @codEmpleado = codEmpleado
+	  FROM EMPLEADOS
+	 WHERE nombre = 'Sebastian'
+	   AND apellido1 = 'Lorenzano'
+	   AND email = 'selorenzano1@gmail.com'
+
+	SELECT @codCliente = codCliente
+	  FROM CLIENTES
+	 WHERE nombre_cliente = 'Jardinero S.A.'
+	   AND email = 'pepelord@gmail.com'
+
+
+	DELETE FROM CLIENTES
+	 WHERE codCliente = @codCliente
+
+	DELETE FROM EMPLEADOS
+	 WHERE codEmpleado = @codEmpleado
+
+	DELETE FROM OFICINAS
+	 WHERE codOficina = @codOficina
+	COMMIT
+END TRY
+
+BEGIN CATCH
+	ROLLBACK
+	PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				  ', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				  ', LINEA: ', ERROR_LINE())
+	RETURN
+END CATCH
+
+SET IMPLICIT_TRANSACTIONS ON
 
 
 
@@ -329,5 +386,77 @@ SET IMPLICIT_TRANSACTIONS ON
 --				utilizando funciones de SQL Server (piensa que los 6 últimos caracteres son números...)
 --				Forma de pago debe ser: 'PayPal' y Fechapago la del día
 -------------------------------------------------------------------------------------------
+GO
+SET IMPLICIT_TRANSACTIONS OFF
+DECLARE @codCliente INT, @codPedido INT,
+@codProducto1 INT = 1, @precioProducto1 DECIMAL(9,2), @cantidadProducto1 INT = 3,
+@codProducto2 INT = 2, @precioProducto2 DECIMAL(9,2), @cantidadProducto2 INT = 2,
+@totalPago DECIMAL(9,2),
+@numTransaccion INT, @idTransaccion VARCHAR(15)
+	
+BEGIN TRY
+
+	SELECT @codCliente = MAX(codCliente) + 1
+	FROM CLIENTES
+
+	SELECT @codPedido = MAX(codPedido) + 1
+	FROM PEDIDOS
+	
+	SELECT @precioProducto1 = precio_venta
+	FROM PRODUCTOS
+	WHERE codProducto = @codProducto1
+
+	SELECT @precioProducto2 = precio_venta
+	FROM PRODUCTOS
+	WHERE codProducto = @codProducto2
+
+	SET @totalPago = @precioProducto1 * @cantidadProducto1 + @precioProducto2 * @cantidadProducto2
+
+	SELECT @numTransaccion = MAX(RIGHT(id_transaccion, 8)) + 1,
+           @idTransaccion = MAX(RIGHT(id_transaccion, 8)) + 1
+  	  FROM PAGOS
+
+	WHILE LEN(@idTransaccion) < 8
+	BEGIN
+		SET @idTransaccion = CONCAT(0,@idTransaccion)
+	END
+	SET @idTransaccion = CONCAT('ak-std-',@idTransaccion)
+
+	BEGIN TRAN
+	
+	INSERT INTO CLIENTES (codCliente, nombre_cliente, nombre_contacto, apellido_contacto, telefono, email, linea_direccion1, linea_direccion2, ciudad, pais, codPostal, codEmpl_Ventas, limite_credito)
+	VALUES (@codCliente, 'Jardinero S.A.', 'Juan', 'Perez', '81327493', 'pepelord@gmail.com', 'Av. Rivadavia 1234', 'Esquina Av. Corrientes', 'Buenos Aires', 'Argentina', '1876',  null, 10000)
 
 
+	INSERT INTO PEDIDOS(codPedido, fecha_pedido, fecha_esperada, fecha_entrega, codEstado, comentarios, codCliente)
+	VALUES (@codPedido, GETDATE(), DATEADD(DAY, 10, GETDATE()), NULL, 'P', 'PENDIENTE', @codCliente)
+
+	INSERT INTO DETALLE_PEDIDOS(codPedido, codProducto, cantidad, precio_unidad, numeroLinea)
+	VALUES (@codPedido, @codProducto1, @cantidadProducto1, @precioProducto1, 1),
+		   (@codPedido, @codProducto2, @cantidadProducto2, @precioProducto2, 2)
+
+	INSERT INTO PAGOS (codCliente, id_transaccion, fechaHora_pago, importe_pago, codFormaPago, codPedido)
+	VALUES (@codCliente, @idTransaccion, GETDATE(), @totalPago, 'P', @codPedido)
+	
+	COMMIT
+END TRY
+
+BEGIN CATCH
+	ROLLBACK
+	PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				  ', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				  ', LINEA: ', ERROR_LINE())
+	RETURN
+END CATCH
+
+SET IMPLICIT_TRANSACTIONS ON
+
+
+
+SELECT * FROM PAGOS
+
+
+
+
+
+-- EXEC sp_help PRODUCTOS
