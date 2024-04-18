@@ -49,6 +49,7 @@ BEGIN
         PRINT 'El codFabricante no puede ser nulo'
         RETURN -1
     END
+    SET @nombre = NULL
 
     SELECT @nombre = nombre
       FROM FABRICANTE
