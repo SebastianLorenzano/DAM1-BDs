@@ -169,14 +169,15 @@ BEGIN
 			PRINT 'El codCliente no es válido.'
 			RETURN -1
 		END
-
-
 		--TODO: CHEQUEO POR SI NO ESTA
+		IF EXISTS (SELECT codCategoria FROM CATEGORIA_PRODUCTOS WHERE codCategoria = @codCategoria)
+		BEGIN
+			PRINT 'La categoría ya existe.'
+			RETURN -2
+		END
+
 		INSERT INTO CATEGORIA_PRODUCTOS (codCategoria, nombre, descripcion_texto, descripcion_html, imagen)
 			VALUES (@codCategoria, @nombre, @descripcion_texto, @descripcion_html, @imagen)
-
-
-
 	END TRY
     BEGIN CATCH
         PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
@@ -187,7 +188,19 @@ END
 
 ----------------------
 GO
+DECLARE @codCategoria CHAR(2) = 'AA'
+DECLARE @nombre VARCHAR(50) = 'Categoría de prueba AA'
+DECLARE @descripcion_texto VARCHAR(100) = 'Esto es una descripción de prueba en texto'
+DECLARE @descripcion_html VARCHAR(100) = '<h1>Esto es una descripción de prueba en HTML</h1>'
+DECLARE @imagen VARCHAR(256) = 'prueba.jpg'
+DECLARE @result INT
 
+EXEC @result = crearCategoriaProducto @codCategoria, @nombre, @descripcion_texto, @descripcion_html, @imagen
+IF @result <> 0
+BEGIN
+	PRINT 'El comando "crearCategoriaProducto" dio error.'
+	RETURN
+END
 
 
 -------------------------------------------------------------------------------------------
@@ -209,9 +222,49 @@ GO
 --		Se puede hacer una SELECT antes de ejecutar la sentencia de actualización o bien utilizar la variable @@ROWCOUNT
 --
 -------------------------------------------------------------------------------------------
+GO
+
+CREATE OR ALTER PROCEDURE acuseRecepcionPedidosCliente(@codCliente INT, @numPedidosAct INT OUTPUT)
+AS
+BEGIN
+	BEGIN TRY
+		IF @codCliente IS NULL OR @codCliente <= 0
+		BEGIN
+			PRINT 'El codCliente no es válido.'
+			RETURN -1
+		END
+
+		SET @numPedidosAct = NULL
+
+		UPDATE PEDIDOS
+		   SET fecha_entrega = GETDATE(),
+			   codEstado = 'E'
+		 WHERE codCliente = @codCliente
+		   AND codEstado = 'P'
+		   AND fecha_entrega IS NULL
+
+		SET @numPedidosAct = @@ROWCOUNT
+	END TRY
+	BEGIN CATCH
+		PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+	END CATCH
+END
 
 
+-------------------
+GO
+DECLARE @codCliente INT = 19
+DECLARE @numPedidosAct INT
+DECLARE @result INT
 
+EXEC @result = acuseRecepcionPedidosCliente @codCliente, @numPedidosAct OUTPUT
+IF @result <> 0
+BEGIN
+	PRINT 'El comando "acuseRecepcionPedidosCliente" dio error.'
+	RETURN
+END
 
 -------------------------------------------------------------------------------------------
 -- 5. Implementa un procedimiento llamado 'crearOficina' que inserte una nueva oficina en JARDINERIA.
@@ -240,9 +293,52 @@ GO
 --              EXEC @ret = crearOficina ...
 --              IF @ret <> 0 ...
 -------------------------------------------------------------------------------------------
+GO
+CREATE OR ALTER PROCEDURE crearOficina(@codOficina CHAR(6), @ciudad VARCHAR(40), @pais VARCHAR(50), @codPostal CHAR(5), @telefono VARCHAR(15), @linea_direccion1 VARCHAR(100), @linea_direccion2 VARCHAR(100))
+AS
+BEGIN
+	BEGIN TRY
+		IF @codOficina IS NULL OR @ciudad IS NULL OR @pais IS NULL OR @codPostal IS NULL OR @telefono IS NULL OR @linea_direccion1 IS NULL
+		BEGIN
+			PRINT 'Faltan parámetros obligatorios.'
+			RETURN -1
+		END
+
+		IF EXISTS (SELECT codOficina FROM OFICINAS WHERE codOficina = @codOficina)
+		BEGIN
+			PRINT 'La oficina ya existe.'
+			RETURN -2
+		END
+
+		INSERT INTO OFICINAS (codOficina, ciudad, pais, codPostal, telefono, linea_direccion1, linea_direccion2)
+			VALUES (@codOficina, @ciudad, @pais, @codPostal, @telefono, @linea_direccion1, @linea_direccion2)
+	END TRY
+	BEGIN CATCH
+		PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+	END CATCH
+END
 
 
+-------------------
+GO
 
+DECLARE @codOficina CHAR(6) = 'BSA-AR'
+DECLARE @ciudad VARCHAR(40) = 'Buenos Aires'
+DECLARE @pais VARCHAR(50) = 'Argentina'
+DECLARE @codPostal CHAR(5) = '01876'
+DECLARE @telefono VARCHAR(15) = '12341234'
+DECLARE @linea_direccion1 VARCHAR(100) = 'Calle Generica 123'
+DECLARE @linea_direccion2 VARCHAR(100) = 'Piso 3 IZQ'
+DECLARE @result INT
+
+EXEC @result = crearOficina @codOficina, @ciudad, @pais, @codPostal, @telefono, @linea_direccion1, @linea_direccion2
+IF @result <> 0
+BEGIN
+	PRINT 'El comando "crearOficina" dio error.'
+	RETURN
+END
 
 
 -------------------------------------------------------------------------------------------
@@ -262,8 +358,61 @@ GO
 --              EXEC @ret = cambioJefes ...
 --              IF @ret <> 0 ...
 -------------------------------------------------------------------------------------------
+GO
 
+CREATE OR ALTER PROCEDURE cambioJefes(@ant_codEmplJefe INT, @des_codEmplJefe INT, @numEmpleados INT OUTPUT)
+AS
+BEGIN
+	BEGIN TRY
+		IF @ant_codEmplJefe <= 0 OR @des_codEmplJefe <= 0
+		BEGIN
+			PRINT 'Los datos insertados son incorrectos'
+			RETURN -1
+		END
 
+		IF NOT EXISTS (SELECT 1 FROM EMPLEADOS WHERE codEmpleado = @ant_codEmplJefe)
+		BEGIN
+			PRINT 'El codEmpleado @ant_codEmplJefe no existe.'
+			RETURN -2
+		END
+
+		IF NOT EXISTS (SELECT 1 FROM EMPLEADOS WHERE codEmpleado = @des_codEmplJefe)
+		BEGIN
+			PRINT 'El codEmpleado @des_codEmplJefe no existe.'
+			RETURN -3
+		END
+
+		SET @numEmpleados = NULL
+
+		UPDATE EMPLEADOS
+		SET codEmplJefe = @des_codEmplJefe
+		WHERE codEmplJefe = @ant_codEmplJefe
+		   OR codEmpleado = @ant_codEmplJefe
+
+		SET @numEmpleados = @@ROWCOUNT
+
+	END TRY
+	BEGIN CATCH
+		PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+	END CATCH
+END
+
+---------------
+GO
+
+DECLARE @ant_codEmplJefe INT = 3
+DECLARE @des_codEmplJefe INT = 5
+DECLARE @numEmpleados INT
+DECLARE @result INT
+
+EXEC @result = cambioJefes @ant_codEmplJefe, @des_codEmplJefe, @numEmpleados OUTPUT
+IF @result <> 0
+BEGIN
+	PRINT 'El comando "cambioJefes" dio error.'
+	RETURN
+END
 
 -------------------------------------------------------------------------------------------
 -- 7. Implementa una función llamada getCostePedidos que reciba como parámetro un codCliente y devuelva
@@ -271,8 +420,7 @@ GO
 --	
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
-SELECT idCliente, <llamada a tu funcion>
-  FROM CLIENTES;
+
 
 
 -------------------------------------------------------------------------------------------
