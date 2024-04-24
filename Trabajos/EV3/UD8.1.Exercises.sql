@@ -384,20 +384,96 @@ BEGIN
 
 		SET @numEmpleados = NULL
 
-		UPDATE EMPLEADOS
-		SET codEmplJefe = @des_codEmplJefe
-		WHERE codEmplJefe = @ant_codEmplJefe
-		   OR codEmpleado = @ant_codEmplJefe
+		BEGIN TRAN
 
-		SET @numEmpleados = @@ROWCOUNT
+			UPDATE EMPLEADOS
+			SET codEmplJefe = @des_codEmplJefe
+			WHERE codEmplJefe = @ant_codEmplJefe
+				OR codEmpleado = @ant_codEmplJefe
 
+			UPDATE EMPLEADOS
+			SET codEmplJefe = 
+			CASE 
+				WHEN codEmplJefe = @ant_codEmplJefe OR codEmplJefe IS NULL THEN @des_codEmplJefe
+				WHEN codEmpleado = @ant_codEmplJefe THEN NULL
+			END
+			WHERE codEmpleado = @des_codEmplJefe
+
+			SET @numEmpleados = @@ROWCOUNT
+
+		COMMIT
 	END TRY
 	BEGIN CATCH
+		ROLLBACK
 		PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
  				', DESCRIPCION: ', ERROR_MESSAGE(),
  				', LINEA: ', ERROR_LINE())
 	END CATCH
 END
+
+/* Estructura de BEGIN TRANSACTION
+
+GO
+
+CREATE OR ALTER PROCEDURE cambioJefes(@ant_codEmplJefe INT, @des_codEmplJefe INT, @numEmpleados INT OUTPUT)
+AS
+BEGIN
+	BEGIN TRY
+		IF @ant_codEmplJefe <= 0 OR @des_codEmplJefe <= 0
+		BEGIN
+			PRINT 'Los datos insertados son incorrectos'
+			RETURN -1
+		END
+
+		IF NOT EXISTS (SELECT 1 FROM EMPLEADOS WHERE codEmpleado = @ant_codEmplJefe)
+		BEGIN
+			PRINT 'El codEmpleado @ant_codEmplJefe no existe.'
+			RETURN -2
+		END
+
+		IF NOT EXISTS (SELECT 1 FROM EMPLEADOS WHERE codEmpleado = @des_codEmplJefe)
+		BEGIN
+			PRINT 'El codEmpleado @des_codEmplJefe no existe.'
+			RETURN -3
+		END
+
+		SET @numEmpleados = NULL
+
+		BEGIN TRAN
+
+			UPDATE EMPLEADOS
+			SET codEmplJefe = @des_codEmplJefe
+			WHERE codEmplJefe = @ant_codEmplJefe
+				OR codEmpleado = @ant_codEmplJefe
+
+			UPDATE EMPLEADOS
+			SET codEmplJefe = 
+			CASE 
+				WHEN codEmplJefe = @ant_codEmplJefe OR codEmplJefe IS NULL THEN @des_codEmplJefe
+				WHEN codEmpleado = @ant_codEmplJefe THEN NULL
+			END
+			WHERE codEmpleado = @des_codEmplJefe
+
+			SET @numEmpleados = @@ROWCOUNT
+
+		COMMIT
+	END TRY
+	BEGIN CATCH
+		ROLLBACK
+		PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+	END CATCH
+END
+
+
+*/
+
+
+
+
+
+
 
 ---------------
 GO
