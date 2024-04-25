@@ -497,7 +497,19 @@ END
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
 
+GO
+CREATE OR ALTER FUNCTION getCostePedidos(@codCliente INT)
+RETURNS DECIMAL(9,2)
+AS
+BEGIN
+	DECLARE @coste DECIMAL(9,2)
 
+	SELECT @coste += importe_pago
+	  FROM PAGOS
+	 WHERE codCliente = @codCliente
+
+	RETURN @coste
+END
 
 -------------------------------------------------------------------------------------------
 -- 8. Implementa una función llamada numEmpleadosOfic que reciba como parámetro un codOficina y devuelva
@@ -506,7 +518,18 @@ END
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
 
+GO
+CREATE OR ALTER FUNCTION numEmpleadosOficina(@codOficina INT)
+RETURNS INT
+AS
+BEGIN
+	DECLARE @numEmpleados INT
 
+	SELECT @numEmpleados = COUNT(codEmpleado)
+	  FROM EMPLEADOS
+	 WHERE codOficina = @codOficina
+	 RETURN @numEmpleados
+END
 
 -------------------------------------------------------------------------------------------
 -- 9. Implementa una función llamada clientePagos_SN que reciba como parámetro un codCliente y devuelva
@@ -514,7 +537,22 @@ END
 --	
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
+GO
+CREATE OR ALTER FUNCTION clientePagos_SN(@codCliente INT)
+RETURNS CHAR(1)
+AS
+BEGIN
+	DECLARE @result CHAR(1)
 
+	SELECT @result = 'S'
+	 WHERE EXISTS (SELECT 1 FROM PAGOS WHERE codCliente = @codCliente) 
+
+	IF @result <> 'S'
+	BEGIN
+		SET @result = 'N'
+	END
+	RETURN @result
+END
 
 
 -------------------------------------------------------------------------------------------
@@ -523,4 +561,13 @@ END
 
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
+
+GO
+CREATE OR ALTER FUNCTION pedidosPendientesAnyo(@codEstado CHAR(1), @anyo DATE)
+RETURNS TABLE
+AS
+	RETURN SELECT *
+	         FROM PEDIDOS
+		    WHERE codEstado = @codEstado
+			  AND YEAR(fecha_pedido) = @anyo
 
