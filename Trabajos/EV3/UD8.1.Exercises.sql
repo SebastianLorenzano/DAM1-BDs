@@ -162,7 +162,7 @@ BEGIN
 		BEGIN
 			PRINT 'El codCategoria no es válido.'
 			RETURN -1
-		END
+		END	
 		IF EXISTS (SELECT codCategoria FROM CATEGORIA_PRODUCTOS WHERE codCategoria = @codCategoria)
 		BEGIN
 			PRINT 'La categoría ya existe.'
