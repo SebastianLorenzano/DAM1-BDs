@@ -160,7 +160,7 @@ BEGIN
 	BEGIN TRY
 		IF @codCategoria IS NULL
 		BEGIN
-			PRINT 'El codCliente no es válido.'
+			PRINT 'El codCategoria no es válido.'
 			RETURN -1
 		END
 		--TODO: CHEQUEO POR SI NO ESTA
