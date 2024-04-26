@@ -13,12 +13,13 @@ GO
 
 -------------------------------------------------------------------------------------------
 -- 1. Implementa un procedimiento llamado 'crearCategoria' que inserte una nueva categoría de productos.
---		Parámetros de entrada: codCategoria, nombreCategoria
+--		Parámetros de entrada: codCategory, nameCategory
+
 --		Parámetros de salida: <ninguno>
 --		Tabla: CATEGORIAS
 --		
 --		# Se debe comprobar que todos los parámetros obligatorios están informados, sino devolver -1 y finalizar
---		# Se debe comprobar que el codCategoria no exista en la tabla, y si así fuera, 
+--		# Se debe comprobar que el codCategory no exista en la tabla, y si así fuera, 
 --			imprimir un mensaje indicándolo, devolver -1 y finalizar
 --		
 --		El procedimiento devolverá 0 si finaliza correctamente.
@@ -26,13 +27,55 @@ GO
 --	
 --	  * Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
+GO
 
+CREATE OR ALTER PROCEDURE CreateCategory(@codCategory CHAR(2), @name
+ VARCHAR(100))
+AS
+BEGIN
+	BEGIN TRY
+		IF @codCategory IS NULL
+		BEGIN
+			RETURN -1
+		END
+    		IF @name
+         IS NULL
+		BEGIN
+			RETURN -2
+		END
 
+		IF EXISTS (SELECT @codCategory FROM CATEGORIAS WHERE codCategoria = @codCategory)
+		BEGIN
+			RETURN -3
+		END
 
+		INSERT INTO CATEGORIAS (codCategoria, nombre)
+			VALUES (@codCategory, @name
+      )
+	END TRY
+    BEGIN CATCH
+        PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+    END CATCH
+END
 
+----------------------
+GO
+DECLARE @codCategory CHAR(2) = 'PP'
+DECLARE @name VARCHAR(100) = 'Categoría de prueba PP'
+DECLARE @result INT
+
+EXEC @result = CreateCategory @codCategory, @name
+IF @result <> 0
+BEGIN
+	PRINT 'The procedure named "CreateCategory" failed.'
+  PRINT @result
+	RETURN
+END
 -------------------------------------------------------------------------------------------
 -- 2. Implementa un procedimiento que cree una nueva subcategoría de producto.
---		Parámetros de entrada: codCategoria, nombreSubCategoria
+--		Parámetros de entrada: codCategory, nombreSubCategoria
 --		Parámetros de salida: codSubCategoria
 --		Tabla: SUBCATEGORIAS
 
@@ -45,7 +88,55 @@ GO
 --		
 --	  *Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
+GO
 
+CREATE OR ALTER PROCEDURE CreateSubCategory(@codCategory CHAR(2), @name VARCHAR(100), @subCategory INT OUT)
+AS
+BEGIN
+	BEGIN TRY
+		IF @codCategory IS NULL
+		BEGIN
+			RETURN -1
+		END
+    		IF @name IS NULL
+		BEGIN
+			RETURN -2
+		END
+
+		IF NOT EXISTS (SELECT @codCategory FROM CATEGORIAS WHERE codCategoria = @codCategory)
+		BEGIN
+			RETURN -3
+		END
+
+		INSERT INTO SUBCATEGORIAS (codCategoria, nombre)
+			VALUES (@codCategory, @name)
+    SET @subCategory = SCOPE_IDENTITY()
+	END TRY
+    BEGIN CATCH
+        PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
+ 				', DESCRIPCION: ', ERROR_MESSAGE(),
+ 				', LINEA: ', ERROR_LINE())
+    END CATCH
+END
+
+----------------------
+GO
+
+DECLARE @codCategory CHAR(2) = 'AA'
+DECLARE @nombre VARCHAR(100) = 'Subcategoría de prueba AA'
+DECLARE @result INT
+DECLARE @subCategory INT 
+
+EXEC @result = CreateSubCategory @codCategory, @nombre, @subCategory OUT 
+IF @result <> 0
+BEGIN
+	PRINT 'El comando "CreateSubCategory" dio error.'
+	RETURN
+END
+ELSE
+BEGIN
+  PRINT @subCategory
+END
 
 
 
