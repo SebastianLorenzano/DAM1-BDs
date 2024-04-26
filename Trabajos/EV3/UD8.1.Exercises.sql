@@ -67,6 +67,7 @@ DECLARE @result INT
 EXEC @result = getNombreCliente @codCliente, @nombre OUTPUT
 IF @result <> 0
 BEGIN
+	PRINT 'El comando "getNombreCliente" dio error.'
 	RETURN
 END
 
@@ -502,7 +503,7 @@ CREATE OR ALTER FUNCTION getCostePedidos(@codCliente INT)
 RETURNS DECIMAL(9,2)
 AS
 BEGIN
-	DECLARE @coste DECIMAL(9,2)
+	DECLARE @coste DECIMAL(9,2) = 0
 
 	SELECT @coste += importe_pago
 	  FROM PAGOS
@@ -510,6 +511,11 @@ BEGIN
 
 	RETURN @coste
 END
+
+GO
+
+SELECT codCliente, dbo.getCostePedidos(codCliente) CostePedidos
+  FROM PEDIDOS
 
 -------------------------------------------------------------------------------------------
 -- 8. Implementa una función llamada numEmpleadosOfic que reciba como parámetro un codOficina y devuelva
@@ -519,7 +525,7 @@ END
 -------------------------------------------------------------------------------------------
 
 GO
-CREATE OR ALTER FUNCTION numEmpleadosOficina(@codOficina INT)
+CREATE OR ALTER FUNCTION numEmpleadosOficina(@codOficina CHAR(6))
 RETURNS INT
 AS
 BEGIN
@@ -530,6 +536,11 @@ BEGIN
 	 WHERE codOficina = @codOficina
 	 RETURN @numEmpleados
 END
+
+GO
+
+SELECT codEmpleado, dbo.numEmpleadosOficina(codOficina) numEmpleados
+  FROM EMPLEADOS
 
 -------------------------------------------------------------------------------------------
 -- 9. Implementa una función llamada clientePagos_SN que reciba como parámetro un codCliente y devuelva
@@ -554,7 +565,34 @@ BEGIN
 	RETURN @result
 END
 
+-- Reto
+GO
+CREATE OR ALTER FUNCTION clientePagos_SN(@codCliente INT)
+RETURNS CHAR(1)
+AS
+BEGIN
+	RETURN CASE 
+		WHEN EXISTS(SELECT 1 FROM PAGOS WHERE codCliente = @codCliente) THEN 'S'
+		ELSE 'N'
+		END
+END
 
+-- Version Profe
+GO
+CREATE OR ALTER FUNCTION clientePagos_SN(@codCliente INT)
+RETURNS CHAR(1)
+AS
+BEGIN
+	RETURN ISNULL((SELECT TOP(1) 'S' 
+				     FROM PAGOS
+					WHERE codCliente = @codCliente), 'N')
+END
+
+
+GO 
+
+SELECT codCliente, dbo.clientePagos_SN(codCliente)
+  FROM CLIENTES
 -------------------------------------------------------------------------------------------
 -- 10. Implementa una función llamada pedidosPendientesAnyo que reciba como parámetros 'estado' y 'anyo'
 --	    y devuelva una TABLA con los pedidos pendientes del año 2009 (estos datos deben ponerse directamente en la SELECT, NO son dinámicos)
@@ -570,4 +608,5 @@ AS
 	         FROM PEDIDOS
 		    WHERE codEstado = @codEstado
 			  AND YEAR(fecha_pedido) = @anyo
+
 
