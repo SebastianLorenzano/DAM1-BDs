@@ -582,7 +582,7 @@ SELECT codCliente, dbo.clientePagos_SN(codCliente)
 -------------------------------------------------------------------------------------------
 
 GO
-CREATE OR ALTER FUNCTION pedidosPendientesAnyo(@codEstado CHAR(1), @anyo DATE)
+CREATE OR ALTER FUNCTION pedidosPendientesAnyo(@codEstado CHAR(1), @anyo INT)
 RETURNS TABLE
 AS
 	RETURN SELECT *
