@@ -24,9 +24,6 @@ USE JARDINERIA
 -------------------------------------------------------------------------------------------
 GO
 
-
-
-
 CREATE OR ALTER PROCEDURE getNombreCliente(@codCliente INT, @nombre VARCHAR(50) OUTPUT)
 AS
 BEGIN 
@@ -55,7 +52,6 @@ BEGIN
     END CATCH
 END
 
-
 -------------------
 GO
 
@@ -70,7 +66,6 @@ BEGIN
 	PRINT 'El comando "getNombreCliente" dio error.'
 	RETURN
 END
-
 
 -------------------------------------------------------------------------------------------
 -- 2. Implementa un procedimiento llamado 'getPedidosPagosCliente' que devuelva el número de pedidos y de pagos a partir de un código de cliente.
@@ -119,7 +114,6 @@ BEGIN
     END CATCH
 END
 
-
 -------------------
 GO
 
@@ -135,7 +129,6 @@ BEGIN
 	RETURN
 END
 PRINT CONCAT('El cliente ', @codCliente, ' tiene ', @numPedidos, ' pedidos y ', @numPagos, ' pagos.')
-
 
 -------------------------------------------------------------------------------------------
 -- 3. Implementa un procedimiento llamado 'crearCategoriaProducto' que inserte una nueva categoría de producto en la base de datos JARDINERIA.
@@ -203,7 +196,6 @@ BEGIN
 	RETURN
 END
 
-
 -------------------------------------------------------------------------------------------
 -- 4. Implementa un procedimiento llamado 'acuseRecepcionPedidosCliente' que actualice la fecha de entrega de los pedidos
 --      a la fecha del momento actual y su estado a 'Entregado' para el codCliente pasado por parámetro y solo para los 
@@ -253,7 +245,6 @@ BEGIN
 	END CATCH
 END
 
-
 -------------------
 GO
 DECLARE @codCliente INT = 19
@@ -295,6 +286,7 @@ END
 --              IF @ret <> 0 ...
 -------------------------------------------------------------------------------------------
 GO
+
 CREATE OR ALTER PROCEDURE crearOficina(@codOficina CHAR(6), @ciudad VARCHAR(40), @pais VARCHAR(50), @codPostal CHAR(5), @telefono VARCHAR(15), @linea_direccion1 VARCHAR(100), @linea_direccion2 VARCHAR(100))
 AS
 BEGIN
@@ -321,7 +313,6 @@ BEGIN
 	END CATCH
 END
 
-
 -------------------
 GO
 
@@ -340,7 +331,6 @@ BEGIN
 	PRINT 'El comando "crearOficina" dio error.'
 	RETURN
 END
-
 
 -------------------------------------------------------------------------------------------
 -- 6. Implementa un procedimiento llamado 'cambioJefes' que actualice el jefe/a de los empleados/as del
@@ -466,15 +456,7 @@ BEGIN
  				', LINEA: ', ERROR_LINE())
 	END CATCH
 END
-
-
 */
-
-
-
-
-
-
 
 ---------------
 GO
