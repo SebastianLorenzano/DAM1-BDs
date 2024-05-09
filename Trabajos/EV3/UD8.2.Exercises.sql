@@ -1,4 +1,6 @@
-﻿USE SUPERTIENDA
+﻿
+
+USE SUPERTIENDA
 GO
 				---------------------------
 				--   UD8  -  PROC & FUNC -- 
