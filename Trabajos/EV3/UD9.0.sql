@@ -111,7 +111,7 @@ CREATE OR ALTER TRIGGER TX_TECHNICIAN_DELETE ON TECHNICIANS
 INSTEAD OF DELETE                                      
 AS  
 BEGIN
-DECLARE @amount INT = 2500
+DECLARE @minAmount INT = 2500
     SET XACT_ABORT ON      
         INSERT INTO HIST_TECHNICIANS
         SELECT DELETED.*,
@@ -120,7 +120,7 @@ DECLARE @amount INT = 2500
          WHERE DNI IN (SELECT DNI_technician
                          FROM REPAIRS
                         GROUP BY DNI_technician
-                       HAVING SUM(amount) > @amount)
+                       HAVING SUM(amount) > @minAmount)
         UPDATE REPAIRS
         SET DNI_technician = NULL
         WHERE DNI_technician IN (SELECT DNI from deleted)
@@ -128,7 +128,7 @@ DECLARE @amount INT = 2500
         WHERE DNI IN (SELECT DNI FROM deleted)
 END
 GO
--- CHECK TRIGGER 
+
 
 -- EXERCISE3
 
@@ -171,7 +171,65 @@ CREATE TABLE PRODUCT (
 
 )
 
+-- Creating table
+
+SELECT *
+  INTO PRODUCTS_OUTOFSTOCK 
+  FROM ARTICULOS
+ WHERE 1 = 0
+
+ ALTER TABLE PRODUCTS_OUTOFSTOCK
+  ADD insertionDate  DATE,
+      nameSupplier VARCHAR(200)
+
 GO
 
--- TODO: TRIGGER
 
+
+-- TODO: TRIGGER
+GO
+CREATE OR ALTER TRIGGER TX_SUPPLIER_DELETE ON SUPPLIERS   
+INSTEAD OF DELETE                                      
+AS  
+BEGIN
+    SET XACT_ABORT ON      
+        INSERT INTO PRODUCTS_OUTOFSTOCK
+        SELECT p.*, GETDATE(), d.name
+          FROM DELETED d, PRODUCT p
+         WHERE p.codSupplier = d.codSupplier
+           AND p.stock <= 0      -- In case there were reserves and the number was minus than 0
+        
+        UPDATE PRODUCT
+        SET codSupplier = NULL
+        WHERE codSupplier IN (SELECT codSupplier from deleted)
+
+        DELETE FROM SUPPLIERS
+        WHERE codSupplier IN (SELECT codSupplier FROM deleted)
+END
+GO
+
+
+USE JARDINERIA
+
+SELECT *
+  INTO CLIENTES_HISTORICO
+  FROM CLIENTES
+ WHERE 1 = 0
+
+ ALTER TABLE CLIENTES_HISTORICO
+  ADD fechaMod  DATE
+
+ ALTER TABLE CLIENTES_HISTORICO ADD CONSTRAINT PRIMARY KEY (codCliente, fechaMod)
+
+CREATE OR ALTER TRIGGER TX_CLIENTES_UPDATE CLIENTES
+AFTER UPDATE
+AS
+BEGIN
+    SET XACT_ABORT ON  
+    INSERT INTO CLIENTES_HISTORICO    
+    SELECT *, GETDATE() 
+      FROM deleted
+END
+
+-- I couldn't test the code as I don't have my db in my laptop this 
+    -- weekend, sorry Carlos if something is wrong!
