@@ -132,8 +132,9 @@ GO
 
 -- EXERCISE3
 
+
 GO
-CREATE DATABASE SUPPLIERS
+CREATE DATABASE SUPPLIERSDB
 GO
 USE SUPPLIERS
 GO
@@ -157,7 +158,7 @@ CREATE TABLE SUPPLIERS
     CONSTRAINT PK_SUPPLIER PRIMARY KEY (codSupplier)
 )
 
-CREATE TABLE PRODUCT (
+CREATE TABLE PRODUCTS (
     codProduct          INT IDENTITY,
     name                VARCHAR(200),
     stock               INT,
@@ -165,25 +166,25 @@ CREATE TABLE PRODUCT (
     codWarehouse        INT,
     codSupplier         INT
     
-    CONSTRAINT PK_PRODUCT PRIMARY KEY (codProduct),
-    CONSTRAINT FK_PRODUCT_WAREHOUSE FOREIGN KEY (codWarehouse) REFERENCES WAREHOUSE(codWarehouse),
-    CONSTRAINT FK_PRODUCT_SUPPLIERS FOREIGN KEY (codSupplier) REFERENCES SUPPLIERS(codSupplier)
+    CONSTRAINT PK_PRODUCTS PRIMARY KEY (codProduct),
+    CONSTRAINT FK_PRODUCTS_WAREHOUSE FOREIGN KEY (codWarehouse) REFERENCES WAREHOUSE(codWarehouse),
+    CONSTRAINT FK_PRODUCTS_SUPPLIERS FOREIGN KEY (codSupplier) REFERENCES SUPPLIERS(codSupplier)
 
 )
 
--- Creating table
+CREATE TABLE PRODUCTS_OUTOFSTOCK (
+    codProduct          INT IDENTITY,
+    name                VARCHAR(200),
+    stock               INT,
+    price               DECIMAL(9,2),
+    codWarehouse        INT,
+    codSupplier         INT
+    insertionDate       DATE,
+    nameSupplier        VARCHAR(200) NOT NULL,
 
-SELECT *
-  INTO PRODUCTS_OUTOFSTOCK 
-  FROM ARTICULOS
- WHERE 1 = 0
+    CONSTRAINT PK_PRODUCTS_OUTOFSTOCK PRIMARY KEY(codProduct)
 
- ALTER TABLE PRODUCTS_OUTOFSTOCK
-  ADD insertionDate  DATE,
-      nameSupplier VARCHAR(200)
-
-GO
-
+)
 
 
 -- TODO: TRIGGER
@@ -195,11 +196,11 @@ BEGIN
     SET XACT_ABORT ON      
         INSERT INTO PRODUCTS_OUTOFSTOCK
         SELECT p.*, GETDATE(), d.name
-          FROM DELETED d, PRODUCT p
+          FROM DELETED d, PRODUCTS p
          WHERE p.codSupplier = d.codSupplier
            AND p.stock <= 0      -- In case there were reserves and the number was minus than 0
         
-        UPDATE PRODUCT
+        UPDATE PRODUCTS
         SET codSupplier = NULL
         WHERE codSupplier IN (SELECT codSupplier from deleted)
 
