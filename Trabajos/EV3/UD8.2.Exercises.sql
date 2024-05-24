@@ -1,4 +1,4 @@
-﻿
+﻿-- Hola carlos, no llegue a completar todos pero hice algunos de los avanzados para preparar el examen :D
 
 USE SUPERTIENDA
 GO
