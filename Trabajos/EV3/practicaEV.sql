@@ -309,3 +309,13 @@ EXEC CrearProducto @nombre = 'Leche', @precioUnitario = 1.50, @iva = 21, @codSub
 -- Caso de error: codSubCategoria inválido
 EXEC CrearProducto @nombre = 'Ordenador', @precioUnitario = 1200.00, @iva = 21, @codSubCategoria = 99, @codProducto = @nuevoCodProducto OUTPUT;
 GO
+
+GO
+USE JARDINERIA
+GO
+
+CREATE OR ALTER PROCEDURE CrearCliente(@nombre_cliente VARCHAR(50), @nombre_contacto VARCHAR(50), @apellido_contacto VARCHAR(50), @telefono VARCHAR(15), @email VARCHAR(100), )
+
+
+
+

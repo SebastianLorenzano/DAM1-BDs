@@ -15,9 +15,9 @@ BEGIN
 
     END TRY
     BEGIN CATCH
-        PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
- 				', DESCRIPCION: ', ERROR_MESSAGE(),
- 				', LINEA: ', ERROR_LINE())
+        PRINT CONCAT('Error Number: ',ERROR_NUMBER,
+                     'Error Line: ', ERROR_LINE,
+                     'Error Message: ', ERROR_MESSAGE)
     END CATCH
 
 END
