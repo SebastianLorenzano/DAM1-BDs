@@ -91,56 +91,40 @@ END
 --	  *Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
 GO
-
-CREATE OR ALTER PROCEDURE CreateSubCategory(@codCategory CHAR(2), @name VARCHAR(100), @subCategory INT OUT)
+CREATE OR ALTER PROCEDURE CrearSubCategoria(@codCategoria CHAR(2), @nombreSubCategoria VARCHAR(100), @codSubCategoria INT OUT)
 AS
 BEGIN
-	BEGIN TRY
-		IF @codCategory IS NULL
-		BEGIN
-			RETURN -1
-		END
-    		IF @name IS NULL
-		BEGIN
-			RETURN -2
-		END
+    IF @codCategoria IS NULL
+    BEGIN
+        PRINT 'El codCategoria es Null'
+        RETURN -1
+    END
+    IF @codCategoria NOT IN (SELECT codCategoria FROM CATEGORIAS)
+    BEGIN
+        PRINT 'El codCategoria proporcionado no existe'
+        RETURN -2
+    END
+    SET @codSubCategoria = NULL
 
-		IF NOT EXISTS (SELECT @codCategory FROM CATEGORIAS WHERE codCategoria = @codCategory)
-		BEGIN
-			RETURN -3
-		END
+    INSERT INTO SUBCATEGORIAS(codCategoria, nombre)
+    VALUES (@codCategoria, @nombreSubCategoria)
 
-		INSERT INTO SUBCATEGORIAS (codCategoria, nombre)
-			VALUES (@codCategory, @name)
-    SET @subCategory = SCOPE_IDENTITY()
-	END TRY
-    BEGIN CATCH
-        PRINT CONCAT ('CODERROR: ', ERROR_NUMBER(),
- 				', DESCRIPCION: ', ERROR_MESSAGE(),
- 				', LINEA: ', ERROR_LINE())
-    END CATCH
+    SET @codSubCategoria = SCOPE_IDENTITY()
 END
 
-----------------------
+---------------------------
+
 GO
-
-DECLARE @codCategory CHAR(2) = 'AA'
-DECLARE @nombre VARCHAR(100) = 'Subcategoría de prueba AA'
-DECLARE @result INT
-DECLARE @subCategory INT 
-
-EXEC @result = CreateSubCategory @codCategory, @nombre, @subCategory OUT 
+DECLARE @codCategoria CHAR(2) = 'AL', @nombreSubCategoria VARCHAR(100) = 'España', @codSubCategoria INT, @result INT
+EXEC @result = CrearSubCategoria @codCategoria, @nombreSubCategoria, @codSubCategoria OUT
 IF @result <> 0
 BEGIN
-	PRINT 'El comando "CreateSubCategory" dio error.'
-	RETURN
-END
-ELSE
-BEGIN
-  PRINT @subCategory
+    PRINT 'CrearSubCategoria no se ha podido ejecutar correctamente'
+    RETURN
 END
 
 
+GO
 
 -------------------------------------------------------------------------------------------
 -- 3. Implementa un procedimiento que cree un nuevo producto en la base de datos.
@@ -155,7 +139,65 @@ END
 --		
 --	  * Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
+GO
+USE SUPERTIENDA
+GO
 
+CREATE OR ALTER PROCEDURE CrearProducto(@nombre VARCHAR(100), @precioUnitario DECIMAL(9,2), @iva TINYINT, @codSubCategoria INT, @codProducto INT OUT)
+AS
+BEGIN
+    IF @nombre IS NULL      -- No uso transaccion ya que no lo necesita, al ser un solo insert no hay posibilidades de que falle. 
+    BEGIN
+        PRINT 'El nombre es invalido.'
+        RETURN -1
+    END
+    IF @precioUnitario IS NULL
+    BEGIN
+        PRINT 'El precio unitario es invalido.'
+        RETURN -2
+    END
+    IF NOT EXISTS (SELECT 1 FROM TIPOS_IVA i WHERE i.IVA = @iva)
+    BEGIN
+        PRINT 'El IVA es invalido.'
+        RETURN -3
+    END
+    IF @codSubCategoria IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM SUBCATEGORIAS s WHERE s.codSubcategoria = @codSubCategoria)
+        BEGIN
+            PRINT 'El CodSubcategoria es invalido.'
+        END
+    END
+        INSERT INTO PRODUCTOS (nombre, precioUnitario, IVA, codSubcategoria)
+        VALUES (@nombre, @precioUnitario, @iva, @codSubCategoria)
+        SET @codProducto = SCOPE_IDENTITY()
+END
+
+
+GO
+
+DECLARE @nuevoCodProducto INT, @result INT
+
+-- Caso de error: nombre nulo
+EXEC @result = CrearProducto @nombre = NULL, @precioUnitario = 100.00, @iva = 21, @codSubCategoria = 1, @codProducto = @nuevoCodProducto OUTPUT;
+IF @result <> 0
+BEGIN
+    PRINT 'CrearProducto no se pudo realizar.'
+    RETURN
+END
+
+
+
+-- Caso de error: precioUnitario nulo
+EXEC CrearProducto @nombre = 'Camiseta', @precioUnitario = NULL, @iva = 21, @codSubCategoria = 2, @codProducto = @nuevoCodProducto OUTPUT;
+
+-- Caso de error: iva nulo
+EXEC CrearProducto @nombre = 'Leche', @precioUnitario = 1.50, @iva = 21, @codSubCategoria = 3, @codProducto = @nuevoCodProducto OUTPUT;
+
+
+-- Caso de error: codSubCategoria inválido
+EXEC CrearProducto @nombre = 'Ordenador', @precioUnitario = 1200.00, @iva = 21, @codSubCategoria = 99, @codProducto = @nuevoCodProducto OUTPUT;
+GO
 
 
 -------------------------------------------------------------------------------------------
@@ -170,8 +212,30 @@ END
 --	 
 --	  * Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
+GO
+USE SUPERTIENDA
+GO
+CREATE OR ALTER PROCEDURE CrearValoracionProducto(@codCliente INT, @codProducto INT, 
+												  @estrellas TINYINT, @fechaValoracion DATE, @comentario VARCHAR(250))
+AS
+BEGIN
+	IF @codCliente IS NULL OR NOT EXISTS (SELECT 1 FROM CLIENTES WHERE codCliente = @codCliente)
+	BEGIN
+		PRINT 'El codCliente es invalido.'
+		RETURN -1
+	END
+	IF @codProducto IS NULL OR NOT EXISTS (SELECT 1 FROM PRODUCTOS WHERE codProducto = @codProducto)
+	BEGIN
+		PRINT 'El codProducto es invalido.'
+		RETURN -2
+	END
+
+	INSERT INTO VALORACIONES_PRODUCTOS (codCliente, codProducto, estrellas, fechaValoracion, comentario)
+	VALUES (@codCliente, @codProducto, @estrellas, @fechaValoracion, @comentario)
+END
 
 
+GO
 
 -------------------------------------------------------------------------------------------
 -- 5. Implementa un procedimiento que cree un nuevo pedido
@@ -236,9 +300,31 @@ END
 --  Ayuda: recuerda incluir el prefijo dbo. al llamar a la función
 --   En las funciones nunca debes indicar un valor directamente (es decir, "hardcodeado")
 -------------------------------------------------------------------------------------------
-SELECT codCliente, <llamada a tu funcion>
-  FROM CLIENTES;
+GO
+--SELECT codCliente, <llamada a tu funcion>
+--  FROM CLIENTES;
 
+USE SUPERTIENDA
+
+GO
+CREATE OR ALTER FUNCTION getNumPedidos (@idCliente INT)
+RETURNS INT
+AS
+BEGIN
+    IF @idCliente IS NULL OR @idCliente <= 0
+    BEGIN
+        RETURN 0
+    END
+    RETURN  (SELECT COUNT(codPedido) 
+                     FROM PEDIDOS
+                    WHERE codCliente = @idCliente)
+END
+
+
+GO
+SELECT TOP(10) codCliente, dbo.getNumPedidos(codCliente) NumPedidos
+  FROM CLIENTES
+GO
 
 -------------------------------------------------------------------------------------------
 -- 9. Implementa una función llamada getCostePedidos que reciba como parámetro un idCliente y devuelva
@@ -246,8 +332,25 @@ SELECT codCliente, <llamada a tu funcion>
 --	
 --	Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
-SELECT codCliente, <llamada a tu funcion>
-  FROM CLIENTES;
+GO
+USE SUPERTIENDA
+GO
+
+CREATE OR ALTER FUNCTION getCostePedidos(@idCliente INT)
+RETURNS DECIMAL(13,2)
+AS
+BEGIN
+    RETURN (SELECT ISNULL(SUM(l.totalLinea), 0)
+              FROM PEDIDOS p, LINEAS_PEDIDOS l
+             WHERE p.codPedido = l.codPedido
+              AND p.codCliente = @idCliente)
+END
+
+GO
+
+SELECT codCliente, dbo.getCostePedidos(codCliente) FROM CLIENTES
+GO
+
 
 
 -------------------------------------------------------------------------------------------

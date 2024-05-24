@@ -218,6 +218,7 @@ GO
 --
 --    Recuerda que debes incluir la SELECT y comprobar el funcionamiento
 -------------------------------------------------------------------------------------------
+GO
 USE SUPERTIENDA
 GO
 
@@ -249,7 +250,7 @@ GO
 --		
 --	  * Comprueba que el funcionamiento es correcto realizando una desde un script y comprobando la finalización del mismo
 -------------------------------------------------------------------------------------------
-
+GO
 USE SUPERTIENDA
 GO
 
@@ -307,3 +308,4 @@ EXEC CrearProducto @nombre = 'Leche', @precioUnitario = 1.50, @iva = 21, @codSub
 
 -- Caso de error: codSubCategoria inválido
 EXEC CrearProducto @nombre = 'Ordenador', @precioUnitario = 1200.00, @iva = 21, @codSubCategoria = 99, @codProducto = @nuevoCodProducto OUTPUT;
+GO
